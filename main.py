@@ -7,7 +7,7 @@ screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
 exit_img = pygame.image.load('exit.png').convert_alpha()
-button_img = pygame.image.load('button.png').convert_alpha()
+rect_img = pygame.image.load('button.png').convert_alpha()
 
 
 class Button:
@@ -35,6 +35,19 @@ class Button:
         display.blit(self.image, (self.rect.x, self.rect.y))
 
         return action
+
+
+class rectangles:
+
+     def __init__(self, x, y, image, scale_x = 1, scale_y =1):
+        width = image.get_width()
+        height = image.get_height() 
+        self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale))
+        self.rect = image.get_rect()
+        self.rect.topleft = (x, y)
+
+    def draw(self):
+        pass
 
 
 def main():
