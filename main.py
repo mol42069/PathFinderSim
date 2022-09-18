@@ -37,7 +37,7 @@ class Button:
         return action
 
 
-class rectangles:
+class Rectangles:
 
      def __init__(self, x, y, image, scale_x = 1, scale_y =1):
         width = image.get_width()
@@ -46,7 +46,7 @@ class rectangles:
         self.rect = image.get_rect()
         self.rect.topleft = (x, y)
 
-    def draw(self):
+     def draw(self):
         pass
 
 
