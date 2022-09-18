@@ -6,7 +6,8 @@ y = 1080
 screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
-button_img = pygame.image.load('grey.png').convert_alpha()
+exit_img = pygame.image.load('exit.png').convert_alpha()
+button_img = pygame.image.load('button.png').convert_alpha()
 
 
 class Button:
@@ -41,7 +42,7 @@ def main():
     running = True
     clock = pygame.time.Clock()
 
-    exit_button = Button(1920 - 70 * 0.4, 0, button_img, 0.4, 0.3)
+    exit_button = Button(1920 - 70 * 0.4, 0, exit_img, 0.4, 0.3)
 
     while running:
         clock.tick(500)
@@ -56,3 +57,4 @@ def main():
 
 
 main()
+
