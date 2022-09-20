@@ -77,10 +77,9 @@ class Button:
 
         return action
 
-    def draw_moving(self):
+    def draw_moving(self, pos):
 
         action = False
-        pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
             action = True
             self.clicked = True
