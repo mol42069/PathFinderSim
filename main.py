@@ -219,6 +219,9 @@ class Rectangle:
 
         self.rect = white_image.get_rect()
 
+        self.t1_i = 0
+        self.t2_i = 0
+
         self.start = False
         self.finish = False
         self.wall = False
@@ -256,17 +259,17 @@ class Rectangle:
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
     def transform(self):
-        
+
         pass
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
-# ------------------------------------------------- drop-down menu --------------------------------------------------- #
+# ----------------------------------------------------- Choice ------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-class DropDown:
+class Choice:
 
     def __init__(self):
         pass
@@ -278,6 +281,7 @@ class DropDown:
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
+# --------------------------------------------- follow cursor function ----------------------------------------------- #
 
 def follow_cursor(rect):
     pos = pygame.mouse.get_pos()
@@ -291,7 +295,7 @@ def init_screen():
     rectangles = []
     for i in range(0, 35):
         new_rectangle = []
-        for o in range(0, 64):
+        for o in range(0, 62):
             new_rectangle.append(Rectangle(white_start_img, transform1_img, transform2_img, border_img))
             new_rectangle[o].draw(o * 30, i * 30 + 30)
         rectangles.append(new_rectangle)
@@ -305,7 +309,7 @@ def init_screen():
 def rectangle_clicked(rectangles):
     pos = pygame.mouse.get_pos()
     for i in range(0, 35):
-        for o in range(0, 64):
+        for o in range(0, 62):
             rectangles[i][o].mouse_rectangle(pos)
 
 
