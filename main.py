@@ -30,6 +30,10 @@ exit_img = pygame.image.load('images/exit.png').convert_alpha()
 exit_clicked_img = pygame.image.load('images/exit_clicked.png').convert_alpha()
 exit_hover_img = pygame.image.load('images/exit_hover.png').convert_alpha()
 click_img = pygame.image.load('images/click.png').convert_alpha()
+white_start_img = pygame.image.load('images/starting.png').convert_alpha()
+border_img = pygame.image.load('images/border.png').convert_alpha()
+transform1_img = pygame.image.load('images/transform_1.png').convert_alpha()
+transform2_img = pygame.image.load('images/transform_2.png').convert_alpha()
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -48,8 +52,10 @@ class Button:
 
         width = image.get_width()
         height = image.get_height()
+
         c_width = cimage.get_width()
         c_height = cimage.get_height()
+
         h_width = h_image.get_width()
         h_height = h_image.get_height()
 
@@ -60,6 +66,8 @@ class Button:
         self.rect = image.get_rect()
         self.rect.topleft = (bx, by)
         self.clicked = False
+
+# -------------------------------------------------- draw function --------------------------------------------------- #
 
     def draw(self):
 
@@ -89,6 +97,8 @@ class Button:
 
         return action
 
+# ---------------------------------------------- draw moving function ------------------------------------------------ #
+
     def draw_moving(self, pos):
 
         action = False
@@ -107,6 +117,8 @@ class Button:
 
         return action
 
+# ----------------------------------------- draw a different image function ------------------------------------------ #
+
     def draw_different_img(self, choice=True):
 
         if choice:
@@ -114,6 +126,8 @@ class Button:
 
         else:
             display.blit(self.image, (self.rect.x, self.rect.y))
+
+# ---------------------------------------------- mouse-hover function ------------------------------------------------ #
 
     def mouse_hover(self):
 
@@ -154,6 +168,8 @@ class ButtonCaM:
         self.rect.topleft = (bx, by)
         self.clicked = False
 
+# ---------------------------------------------- draw moving function ------------------------------------------------ #
+
     def draw_moving_clicking(self, pos):
 
         action = False
@@ -176,6 +192,65 @@ class ButtonCaM:
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------- Background rectangles ----------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+class Rectangle:
+
+    def __init__(self, white_image, transform_img1, transform_img2, wall_img):          # later also start and finish...
+        self.white_image = white_image
+        self.transform_img1 = transform_img1
+        self.transform_img2 = transform_img2
+        self.wall_img = wall_img
+
+        white_image_width = white_image.get_width()
+        white_image_height = white_image.get_height()
+
+        transform_img1_width = transform_img1.get_width()
+        transform_img1_height = transform_img1.get_height()
+
+        transform_img2_width = transform_img2.get_width()
+        transform_img2_height = transform_img2.get_height()
+
+        wall_img_width = wall_img.get_width()
+        wall_img_height = wall_img.get_height()
+
+        self.rect = white_image.get_rect()
+
+        self.left_click = False
+        self.right_click = False
+
+# ------------------------------------------------- draw function ---------------------------------------------------- #
+
+    def draw(self, bx=0, by=0):
+        self.rect.topleft = (bx, by)
+
+        display.blit(self.white_image, (self.rect.x, self.rect.y))
+
+# -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
+
+    def mouse_rectangle(self, pos):
+
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                self.left_click = True
+                display.blit(self.wall_img, (self.rect.x, self.rect.y))
+
+            elif pygame.mouse.get_pressed()[0] != 1:
+                self.left_click = False
+
+            if pygame.mouse.get_pressed()[2] == 1 and not self.right_click:
+                self.right_click = True
+                display.blit(self.white_image, (self.rect.x, self.rect.y))
+
+            elif pygame.mouse.get_pressed()[2] != 1:
+                self.right_click = False
+
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------- functions ----------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -184,6 +259,31 @@ class ButtonCaM:
 def follow_cursor(rect):
     pos = pygame.mouse.get_pos()
     rect.draw_moving_clicking(pos)
+
+
+# ------------------------------------------- initialize screen function --------------------------------------------- #
+
+
+def init_screen():
+    rectangles = []
+    for i in range(0, 35):
+        new_rectangle = []
+        for o in range(0, 64):
+            new_rectangle.append(Rectangle(white_start_img, transform1_img, transform2_img, border_img))
+            new_rectangle[o].draw(o * 30, i * 30 + 30)
+        rectangles.append(new_rectangle)
+
+    return rectangles
+
+
+# ------------------------------------- checks if any rectangle is clicked on ---------------------------------------- #
+
+
+def rectangle_clicked(rectangles):
+    pos = pygame.mouse.get_pos()
+    for i in range(0, 35):
+        for o in range(0, 64):
+            rectangles[i][o].mouse_rectangle(pos)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -197,14 +297,15 @@ def main():
 
     running = True
     clock = pygame.time.Clock()
-    pos = pygame.mouse.get_pos()
-    rect = ButtonCaM(pos[0], pos[1], starting_img, click_img, 0.2, 0.2)
+    # pos = pygame.mouse.get_pos()
+    # rect = ButtonCaM(pos[0], pos[1], starting_img, click_img, 0.2, 0.2)
     exit_button = Button(1920 - 70 * 0.4, 0, exit_img, exit_clicked_img, exit_hover_img, 0.4, 0.3)
     i = 0
-
+    rectangles = init_screen()
     while running:
         clock.tick(144)
-        follow_cursor(rect)
+        # follow_cursor(rect)
+        rectangle_clicked(rectangles)
         if exit_button.draw():
             i += 1
             exit_button.draw_different_img()
