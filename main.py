@@ -219,6 +219,9 @@ class Rectangle:
 
         self.rect = white_image.get_rect()
 
+        self.start = False
+        self.finish = False
+        self.wall = False
         self.left_click = False
         self.right_click = False
 
@@ -236,6 +239,7 @@ class Rectangle:
         if self.rect.collidepoint(pos):
             if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
                 self.left_click = True
+                self.wall = True
                 display.blit(self.wall_img, (self.rect.x, self.rect.y))
 
             elif pygame.mouse.get_pressed()[0] != 1:
@@ -243,10 +247,29 @@ class Rectangle:
 
             if pygame.mouse.get_pressed()[2] == 1 and not self.right_click:
                 self.right_click = True
+                self.wall = False
                 display.blit(self.white_image, (self.rect.x, self.rect.y))
 
             elif pygame.mouse.get_pressed()[2] != 1:
                 self.right_click = False
+
+# -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
+
+    def transform(self):
+        
+        pass
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------- drop-down menu --------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+class DropDown:
+
+    def __init__(self):
+        pass
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
