@@ -272,7 +272,7 @@ class Rectangle:
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform(self, pos):
+    def transform_is_checking(self, pos):
         if self.rect.collidepoint(pos):
             if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
                 self.left_click = True
@@ -288,13 +288,31 @@ class Rectangle:
                 pygame.draw.rect(display, green, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
                 pygame.display.flip()
                 self.t1_i += 1
+            else:
+                self.t1_i = 0
+                self.is_transforming = False
 
-            elif self.t2_i < 10:
+# -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
+
+    def transform_is_checked(self, pos):
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                self.left_click = True
+                self.is_transforming = True
+
+        elif pygame.mouse.get_pressed()[0] != 1:
+            self.left_click = False
+
+        if self.is_transforming:
+            if self.t2_i < 10:
                 w_h = self.t2_i * 3
-
                 pygame.draw.rect(display, blue, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
                 pygame.display.flip()
                 self.t2_i += 1
+
+            else:
+                self.t2_i = 0
+                self.is_transforming = False
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -378,13 +396,22 @@ def rectangle_clicked(pos, rectangles):
             rectangles[i][o].mouse_rectangle(pos)
 
 
-# ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
+# -------------------------------------- transforms if its currently checked ----------------------------------------- #
 
 
-def transformation(pos, rectangles):
+def transformation_checking(pos, rectangles):
     for i in range(0, 35):
         for o in range(0, 62):
-            rectangles[i][o].transform(pos)
+            rectangles[i][o].transform_is_checking(pos)
+
+
+# --------------------------------------- transforms if its already checked ------------------------------------------ #
+
+
+def transformation_checked(pos, rectangles):
+    for i in range(0, 35):
+        for o in range(0, 62):
+            rectangles[i][o].transform_is_checked(pos)
 
 
 # ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
@@ -435,10 +462,10 @@ def main():
 
         match algorithm_choice:                             # here the algorithms will be used
             case "DFS":
-                transformation(pos, rectangles)
+                transformation_checking(pos, rectangles)
 
             case "GREEDY":
-                transformation(pos, rectangles)
+                transformation_checked(pos, rectangles)
 
             case "WALL":
                 rectangle_clicked(pos, rectangles)
