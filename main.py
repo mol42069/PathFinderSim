@@ -16,6 +16,10 @@ import pygame
 
 
 grey = (30, 30, 30)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+white = (100, 100, 100)
+black = (0, 0, 0)
 pygame.init()
 x = 1920
 y = 1080
@@ -24,18 +28,13 @@ display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
 
 # ----------------------------------------------------- images ------------------------------------------------------- #
-
-starting_img = pygame.image.load('images/grey.png').convert_alpha()
 exit_img = pygame.image.load('images/exit.png').convert_alpha()
 exit_clicked_img = pygame.image.load('images/exit_clicked.png').convert_alpha()
 exit_hover_img = pygame.image.load('images/exit_hover.png').convert_alpha()
 click_img = pygame.image.load('images/click.png').convert_alpha()
-white_start_img = pygame.image.load('images/starting.png').convert_alpha()
-border_img = pygame.image.load('images/border.png').convert_alpha()
-transform1_img = pygame.image.load('images/transform_1.png').convert_alpha()
-transform2_img = pygame.image.load('images/transform_2.png').convert_alpha()
 dfs_img = pygame.image.load('images/DFS.png').convert_alpha()
 dfs_clicked_img = pygame.image.load('images/DFS_clicked.png').convert_alpha()
+start_img = pygame.image.load('images/starting.png').convert_alpha()
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -200,41 +199,30 @@ class ButtonCaM:
 
 class Rectangle:
 
-    def __init__(self, white_image, transform_img1, transform_img2, wall_img):          # later also start and finish...
-        self.white_image = white_image
-        self.transform_img1 = transform_img1
-        self.transform_img2 = transform_img2
-        self.wall_img = wall_img
+    def __init__(self, starting_img):          # later also start and finish...
 
-        white_image_width = white_image.get_width()
-        white_image_height = white_image.get_height()
-
-        transform_img1_width = transform_img1.get_width()
-        transform_img1_height = transform_img1.get_height()
-
-        transform_img2_width = transform_img2.get_width()
-        transform_img2_height = transform_img2.get_height()
-
-        wall_img_width = wall_img.get_width()
-        wall_img_height = wall_img.get_height()
-
-        self.rect = white_image.get_rect()
+        self.starting_img = starting_img
+        self.rect = starting_img.get_rect()
 
         self.t1_i = 0
         self.t2_i = 0
+        self.is_transforming = False
 
         self.start = False
         self.finish = False
         self.wall = False
+        self.wall_building = False
+        self.wall_disassembly = False
+        self.wall_built = False
+        self.w_b = 0
         self.left_click = False
         self.right_click = False
 
 # ------------------------------------------------- draw function ---------------------------------------------------- #
 
-    def draw(self, bx=0, by=0):
+    def draw(self, bx, by):
         self.rect.topleft = (bx, by)
-
-        display.blit(self.white_image, (self.rect.x, self.rect.y))
+        display.blit(self.starting_img, (self.rect.x, self.rect.y))
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
@@ -244,7 +232,7 @@ class Rectangle:
             if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
                 self.left_click = True
                 self.wall = True
-                display.blit(self.wall_img, (self.rect.x, self.rect.y))
+                self.wall_building = True
 
             elif pygame.mouse.get_pressed()[0] != 1:
                 self.left_click = False
@@ -252,16 +240,61 @@ class Rectangle:
             if pygame.mouse.get_pressed()[2] == 1 and not self.right_click:
                 self.right_click = True
                 self.wall = False
-                display.blit(self.white_image, (self.rect.x, self.rect.y))
+                self.wall_disassembly = True
 
             elif pygame.mouse.get_pressed()[2] != 1:
                 self.right_click = False
 
+        if self.wall_building and not self.wall_built:
+            if self.w_b < 10:
+                w_h = self.w_b * 3
+
+                self.rect = pygame.draw.rect(display, black, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                pygame.display.flip()
+                self.w_b += 1
+
+            else:
+                self.w_b = 0
+                self.wall_building = False
+                self.wall_built = True
+
+        elif self.wall_disassembly and self.wall_built:
+            if self.w_b < 10:
+                w_h = self.w_b * 3
+                self.rect = pygame.draw.rect(display, white, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                pygame.display.flip()
+                self.w_b += 1
+
+            else:
+                self.w_b = 0
+                self.wall_disassembly = False
+                self.wall_built = False
+
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform(self):
+    def transform(self, pos):
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                self.left_click = True
+                self.is_transforming = True
 
-        pass
+        elif pygame.mouse.get_pressed()[0] != 1:
+            self.left_click = False
+
+        if self.is_transforming:
+            if self.t1_i < 10:
+                w_h = self.t1_i * 3
+
+                pygame.draw.rect(display, green, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                pygame.display.flip()
+                self.t1_i += 1
+
+            elif self.t2_i < 10:
+                w_h = self.t2_i * 3
+
+                pygame.draw.rect(display, blue, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                pygame.display.flip()
+                self.t2_i += 1
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -329,7 +362,7 @@ def init_screen():
     for i in range(0, 35):
         new_rectangle = []
         for o in range(0, 62):
-            new_rectangle.append(Rectangle(white_start_img, transform1_img, transform2_img, border_img))
+            new_rectangle.append(Rectangle(start_img))
             new_rectangle[o].draw(o * 30, i * 30 + 30)
         rectangles.append(new_rectangle)
 
@@ -344,14 +377,27 @@ def rectangle_clicked(pos, rectangles):
         for o in range(0, 62):
             rectangles[i][o].mouse_rectangle(pos)
 
-# ------------------------------------- checks if any rectangle is clicked on ---------------------------------------- #
+
+# ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
+
+
+def transformation(pos, rectangles):
+    for i in range(0, 35):
+        for o in range(0, 62):
+            rectangles[i][o].transform(pos)
+
+
+# ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
 
 
 def get_choices(pos, choices):
     for i in range(0, len(choices)):
         current = choices[i].draw(60 + i * 60, 1, pos)
+
         if current != "NULL":
             return current
+    return "NULL"
+
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -366,7 +412,9 @@ def main():
     clock = pygame.time.Clock()
 
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "DFS"),
-               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "GREEDY")
+               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "GREEDY"),
+               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "WALL"),
+               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "CLEAR")
                ]
 
     # pos = pygame.mouse.get_pos()
@@ -375,18 +423,29 @@ def main():
     exit_button = Button(1920 - 70 * 0.4, 0, exit_img, exit_clicked_img, exit_hover_img, 0.4, 0.3)
     i = 0
     rectangles = init_screen()
+    algorithm_choice = "WALL"
+
     while running:
         pos = pygame.mouse.get_pos()
-        clock.tick(144)
-        # follow_cursor(rect)
-        rectangle_clicked(pos, rectangles)
-        algorithm = get_choices(pos, choices)
+        clock.tick(900000)
+        current_choice = get_choices(pos, choices)
 
-        match algorithm:                                        # here the algorithms will be used
-            case"DFS":
-                print("DFS")
-            case"GREEDY":
-                print("GREEDY")
+        if current_choice != "NULL":
+            algorithm_choice = current_choice
+
+        match algorithm_choice:                             # here the algorithms will be used
+            case "DFS":
+                transformation(pos, rectangles)
+
+            case "GREEDY":
+                transformation(pos, rectangles)
+
+            case "WALL":
+                rectangle_clicked(pos, rectangles)
+
+            case "CLEAR":
+                rectangles = init_screen()
+                algorithm_choice = "WALL"
 
         if exit_button.draw():
             i += 1
