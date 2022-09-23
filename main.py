@@ -27,14 +27,28 @@ screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
 
+
 # ----------------------------------------------------- images ------------------------------------------------------- #
+
+
 exit_img = pygame.image.load('images/exit.png').convert_alpha()
 exit_clicked_img = pygame.image.load('images/exit_clicked.png').convert_alpha()
 exit_hover_img = pygame.image.load('images/exit_hover.png').convert_alpha()
 click_img = pygame.image.load('images/click.png').convert_alpha()
 dfs_img = pygame.image.load('images/DFS.png').convert_alpha()
 dfs_clicked_img = pygame.image.load('images/DFS_clicked.png').convert_alpha()
+dfs_hover_img = pygame.image.load('images/DFS_hover.png').convert_alpha()
 start_img = pygame.image.load('images/starting.png').convert_alpha()
+clear_img = pygame.image.load('images/clear.png').convert_alpha()
+clear_clicked_img = pygame.image.load('images/clear_clicked.png').convert_alpha()
+clear_hover_img = pygame.image.load('images/clear_hover.png').convert_alpha()
+greed_img = pygame.image.load('images/greed.png').convert_alpha()
+greed_hover_img = pygame.image.load('images/greed_hover.png').convert_alpha()
+greed_clicked_img = pygame.image.load('images/greed_clicked.png').convert_alpha()
+wall_img = pygame.image.load('images/wall.png').convert_alpha()
+wall_hover_img = pygame.image.load('images/wall_hover.png').convert_alpha()
+wall_clicked_img = pygame.image.load('images/wall_clicked.png').convert_alpha()
+
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -360,6 +374,17 @@ class Choice:
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------- algorithm ----------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+def dfs():
+    pass
+
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------- functions ----------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -438,10 +463,10 @@ def main():
     running = True
     clock = pygame.time.Clock()
 
-    choices = [Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "DFS"),
-               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "GREEDY"),
-               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "WALL"),
-               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "CLEAR")
+    choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
+               Choice(greed_img, greed_clicked_img, greed_hover_img, "GREEDY"),
+               Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
+               Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR")
                ]
 
     # pos = pygame.mouse.get_pos()
@@ -454,7 +479,7 @@ def main():
 
     while running:
         pos = pygame.mouse.get_pos()
-        clock.tick(900000)
+        clock.tick()
         current_choice = get_choices(pos, choices)
 
         if current_choice != "NULL":
