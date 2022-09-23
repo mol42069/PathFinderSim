@@ -34,7 +34,8 @@ white_start_img = pygame.image.load('images/starting.png').convert_alpha()
 border_img = pygame.image.load('images/border.png').convert_alpha()
 transform1_img = pygame.image.load('images/transform_1.png').convert_alpha()
 transform2_img = pygame.image.load('images/transform_2.png').convert_alpha()
-
+dfs_img = pygame.image.load('images/DFS.png').convert_alpha()
+dfs_clicked_img = pygame.image.load('images/DFS_clicked.png').convert_alpha()
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -271,8 +272,39 @@ class Rectangle:
 
 class Choice:
 
-    def __init__(self):
-        pass
+    def __init__(self, normal_img, clicked_img, hover_img, choice):
+
+        self.choice1_img = normal_img
+        self.choice2_img = clicked_img
+        self.hover_img = hover_img
+
+        self.rect = self.choice1_img.get_rect()
+
+        self.clicked = True
+        self.choice = str(choice)
+
+# ------------------------------------------------- draw function ---------------------------------------------------- #
+
+    def draw(self, bx, by, pos):
+
+        self.rect.topleft = (bx, by)
+
+        if self.rect.collidepoint(pos):
+
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+                self.clicked = True
+                display.blit(self.choice2_img, (self.rect.x, self.rect.y))
+
+                return self.choice
+
+            elif pygame.mouse.get_pressed()[0] != 1:
+                self.clicked = False
+                display.blit(self.hover_img, (self.rect.x, self.rect.y))
+
+        else:
+            display.blit(self.choice1_img, (self.rect.x, self.rect.y))
+
+        return "NULL"
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -281,10 +313,11 @@ class Choice:
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
+
 # --------------------------------------------- follow cursor function ----------------------------------------------- #
 
-def follow_cursor(rect):
-    pos = pygame.mouse.get_pos()
+
+def follow_cursor(pos, rect):
     rect.draw_moving_clicking(pos)
 
 
@@ -306,12 +339,19 @@ def init_screen():
 # ------------------------------------- checks if any rectangle is clicked on ---------------------------------------- #
 
 
-def rectangle_clicked(rectangles):
-    pos = pygame.mouse.get_pos()
+def rectangle_clicked(pos, rectangles):
     for i in range(0, 35):
         for o in range(0, 62):
             rectangles[i][o].mouse_rectangle(pos)
 
+# ------------------------------------- checks if any rectangle is clicked on ---------------------------------------- #
+
+
+def get_choices(pos, choices):
+    for i in range(0, len(choices)):
+        current = choices[i].draw(60 + i * 60, 1, pos)
+        if current != "NULL":
+            return current
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -324,15 +364,30 @@ def main():
 
     running = True
     clock = pygame.time.Clock()
+
+    choices = [Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "DFS"),
+               Choice(dfs_img, dfs_clicked_img, dfs_clicked_img, "GREEDY")
+               ]
+
     # pos = pygame.mouse.get_pos()
     # rect = ButtonCaM(pos[0], pos[1], starting_img, click_img, 0.2, 0.2)
+
     exit_button = Button(1920 - 70 * 0.4, 0, exit_img, exit_clicked_img, exit_hover_img, 0.4, 0.3)
     i = 0
     rectangles = init_screen()
     while running:
+        pos = pygame.mouse.get_pos()
         clock.tick(144)
         # follow_cursor(rect)
-        rectangle_clicked(rectangles)
+        rectangle_clicked(pos, rectangles)
+        algorithm = get_choices(pos, choices)
+
+        match algorithm:                                        # here the algorithms will be used
+            case"DFS":
+                print("DFS")
+            case"GREEDY":
+                print("GREEDY")
+
         if exit_button.draw():
             i += 1
             exit_button.draw_different_img()
