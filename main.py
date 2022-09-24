@@ -19,6 +19,7 @@ grey = (30, 30, 30)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 white = (100, 100, 100)
+start = (255, 255, 255)
 black = (0, 0, 0)
 pygame.init()
 x = 1920
@@ -48,6 +49,9 @@ greed_clicked_img = pygame.image.load('images/greed_clicked.png').convert_alpha(
 wall_img = pygame.image.load('images/wall.png').convert_alpha()
 wall_hover_img = pygame.image.load('images/wall_hover.png').convert_alpha()
 wall_clicked_img = pygame.image.load('images/wall_clicked.png').convert_alpha()
+start_b_img = pygame.image.load('images/start.png').convert_alpha()
+start_b_hover_img = pygame.image.load('images/start_hover.png').convert_alpha()
+start_b_clicked_img = pygame.image.load('images/start_clicked.png').convert_alpha()
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -240,49 +244,83 @@ class Rectangle:
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def mouse_rectangle(self, pos):
+    def mouse_rectangle(self, pos, choice="WALL"):
 
-        if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
-                self.left_click = True
-                self.wall = True
-                self.wall_building = True
+        match choice:
+            case "WALL":
+                if self.rect.collidepoint(pos):
+                    if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                        self.left_click = True
+                        self.wall = True
+                        self.wall_building = True
 
-            elif pygame.mouse.get_pressed()[0] != 1:
-                self.left_click = False
+                    elif pygame.mouse.get_pressed()[0] != 1:
+                        self.left_click = False
 
-            if pygame.mouse.get_pressed()[2] == 1 and not self.right_click:
-                self.right_click = True
-                self.wall = False
-                self.wall_disassembly = True
+                    if pygame.mouse.get_pressed()[2] == 1 and not self.right_click:
+                        self.right_click = True
+                        self.wall = False
+                        self.wall_disassembly = True
 
-            elif pygame.mouse.get_pressed()[2] != 1:
-                self.right_click = False
+                    elif pygame.mouse.get_pressed()[2] != 1:
+                        self.right_click = False
 
-        if self.wall_building and not self.wall_built:
-            if self.w_b < 10:
-                w_h = self.w_b * 3
+                if self.wall_building and not self.wall_built:
+                    if self.w_b < 10:
+                        w_h = self.w_b * 3
 
-                self.rect = pygame.draw.rect(display, black, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
-                pygame.display.flip()
-                self.w_b += 1
+                        self.rect = pygame.draw.rect(display, black, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                        pygame.display.flip()
+                        self.w_b += 1
 
-            else:
-                self.w_b = 0
-                self.wall_building = False
-                self.wall_built = True
+                    else:
+                        self.w_b = 0
+                        self.wall_building = False
+                        self.wall_built = True
 
-        elif self.wall_disassembly and self.wall_built:
-            if self.w_b < 10:
-                w_h = self.w_b * 3
-                self.rect = pygame.draw.rect(display, white, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
-                pygame.display.flip()
-                self.w_b += 1
+                elif self.wall_disassembly and self.wall_built:
+                    if self.w_b < 10:
+                        w_h = self.w_b * 3
+                        self.rect = pygame.draw.rect(display, white, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+                        pygame.display.flip()
+                        self.w_b += 1
 
-            else:
-                self.w_b = 0
-                self.wall_disassembly = False
-                self.wall_built = False
+                    else:
+                        self.w_b = 0
+                        self.wall_disassembly = False
+                        self.wall_built = False
+
+            case "START":
+
+                if self.rect.collidepoint(pos):
+                    if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                        self.left_click = True
+                        self.start = True
+                        self.rect = pygame.draw.rect(display, start, pygame.Rect(self.rect.x, self.rect.y, 30, 30))
+                        pygame.display.flip()
+                        return True
+
+                    elif pygame.mouse.get_pressed()[0] != 1:
+                        self.left_click = False
+                    print(self.start)
+                    return None
+
+            case "START_DEL":
+
+                if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                    self.left_click = True
+                    self.start = False
+                    self.rect = pygame.draw.rect(display, white, pygame.Rect(self.rect.x, self.rect.y, 30, 30))
+                    pygame.display.flip()
+                    return False
+
+                elif pygame.mouse.get_pressed()[0] != 1:
+                    self.left_click = False
+
+                return None
+
+            case "END":
+                pass
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
@@ -380,6 +418,7 @@ class Choice:
 
 
 def dfs():
+    # visited = set()
     pass
 
 
@@ -415,10 +454,10 @@ def init_screen():
 # ------------------------------------- checks if any rectangle is clicked on ---------------------------------------- #
 
 
-def rectangle_clicked(pos, rectangles):
+def rectangle_clicked(pos, rectangles, choice):
     for i in range(0, 35):
         for o in range(0, 62):
-            rectangles[i][o].mouse_rectangle(pos)
+            rectangles[i][o].mouse_rectangle(pos, choice)
 
 
 # -------------------------------------- transforms if its currently checked ----------------------------------------- #
@@ -451,6 +490,36 @@ def get_choices(pos, choices):
     return "NULL"
 
 
+# ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
+
+
+def start_rectangle(pos, rectangles, choice, current_start):
+    if choice == "START":
+        if not current_start:
+            for i in range(0, 35):
+                for o in range(0, 62):
+                    jupp = rectangles[i][o].mouse_rectangle(pos, choice)
+                    if jupp:
+                        coordinates = (i, o)
+                        print(coordinates)
+                        return coordinates
+
+    elif choice == "START_DEL":
+        if current_start:
+            for i in range(0, 35):
+                for o in range(0, 62):
+                    jupp = rectangles[i][o].mouse_rectangle(pos, choice)
+                    if jupp is None:
+                        return None
+
+                    if not jupp:
+                        coordinates = (-1, -1)
+                        return coordinates
+
+                    else:
+                        return None
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # ------------------------------------------------------- main ------------------------------------------------------- #
@@ -466,16 +535,16 @@ def main():
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
                Choice(greed_img, greed_clicked_img, greed_hover_img, "GREEDY"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
+               Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
                Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR")
                ]
-
-    # pos = pygame.mouse.get_pos()
-    # rect = ButtonCaM(pos[0], pos[1], starting_img, click_img, 0.2, 0.2)
 
     exit_button = Button(1920 - 70 * 0.4, 0, exit_img, exit_clicked_img, exit_hover_img, 0.4, 0.3)
     i = 0
     rectangles = init_screen()
     algorithm_choice = "WALL"
+    start_exists = False
+    coordinates = (0, 0)
 
     while running:
         pos = pygame.mouse.get_pos()
@@ -493,11 +562,28 @@ def main():
                 transformation_checked(pos, rectangles)
 
             case "WALL":
-                rectangle_clicked(pos, rectangles)
+                rectangle_clicked(pos, rectangles, algorithm_choice)
 
             case "CLEAR":
                 rectangles = init_screen()
                 algorithm_choice = "WALL"
+
+            case "START":
+                if start_exists:
+                    starting_coordinates = start_rectangle(pos, rectangles, "START_DEL", start_exists)
+
+                else:
+                    starting_coordinates = start_rectangle(pos, rectangles, algorithm_choice, start_exists)
+
+                if starting_coordinates is None:
+                    starting_coordinates = coordinates
+
+                if starting_coordinates == (-1, -1):
+                    start_exists = False
+
+                else:
+                    start_exists = True
+                    coordinates = starting_coordinates
 
         if exit_button.draw():
             i += 1
