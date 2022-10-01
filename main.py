@@ -63,7 +63,7 @@ start_b_clicked_img = pygame.image.load('images/start_clicked.png').convert_alph
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-class Button:
+class Button:                                   # is the EXIT-Button
 
     def __init__(self, bx, by, image, cimage, h_image, scale_x=0.9, scale_y=0.9):
 
@@ -169,7 +169,7 @@ class Button:
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-class ButtonCaM:
+class ButtonCaM:                                # USELESS
 
     def __init__(self, bx, by, image, cimage, scale_x=0.9, scale_y=0.9):
 
@@ -219,39 +219,37 @@ class ButtonCaM:
 
 class Rectangle:
 
-    def __init__(self, starting_img):          # later also start and finish...
+    # TODO: add the finish
 
+    def __init__(self, starting_img):               # this function initializes a rectangle with all needed variables
         self.starting_img = starting_img
         self.rect = starting_img.get_rect()
-
         self.t1_i = 0
         self.t2_i = 0
         self.is_transforming = False
-
         self.start = False
         self.finish = False
-
         self.wall = False
         self.wall_building = False
         self.wall_disassembly = False
         self.wall_built = False
-
         self.w_b = 0
         self.left_click = False
         self.right_click = False
 
 # ------------------------------------------------- draw function ---------------------------------------------------- #
 
-    def draw(self, bx, by):
+    def draw(self, bx, by):                         # here we draw the starting rectangle --> grey
         self.rect.topleft = (bx, by)
         display.blit(self.starting_img, (self.rect.x, self.rect.y))
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def mouse_rectangle(self, pos, choice="WALL"):
+    # TODO: add the finish
 
-        match choice:
-            case "WALL":
+    def mouse_rectangle(self, pos, choice="WALL"):  # this function checks if a button is pressed as well as in which
+        match choice:                               # mode we are currently in. If pressed we change the color of the
+            case "WALL":                            # rectangle in the way the current mode tells us
                 if self.rect.collidepoint(pos):
                     if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
                         self.left_click = True
@@ -300,7 +298,8 @@ class Rectangle:
                     if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
                         self.left_click = True
                         self.start = True
-                        self.rect = pygame.draw.rect(display, start, pygame.Rect(self.rect.x, self.rect.y, 30, 30))
+                        rec = pygame.Rect(self.rect.x, self.rect.y, 9 * 3, 9 * 3)
+                        self.rect = pygame.draw.rect(display, start, rec)
                         pygame.display.flip()
                         return True
 
@@ -328,28 +327,32 @@ class Rectangle:
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform_is_checking(self):
-        while self.t1_i < 10:
-            w_h = self.t1_i * 3
+    def transform_is_checking(self):                # here we transform the rectangle into a green one with a little
+        while self.t1_i < 10:                       # animation where self.t1_i will increase which makes the rectangle
+            w_h = self.t1_i * 3                     # get bigger
             pygame.draw.rect(display, green, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
             pygame.display.flip()
             self.t1_i += 1
 
-        self.t1_i = 0
+        self.t1_i = 0                               # reset the self.t1_i to 0, so we could if we want transform again
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform_is_checked(self):
-        if self.t2_i < 10:
-            w_h = self.t2_i * 3
+    def transform_is_checked(self):                 # here we transform the rectangle into a blue one with a little
+        while self.t2_i < 10:                       # animation where self.t2_i will increase which makes the rectangle
+            w_h = self.t2_i * 3                     # get bigger
             pygame.draw.rect(display, blue, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
             pygame.display.flip()
             self.t2_i += 1
-        else:
-            self.t2_i = 0
+
+        self.t2_i = 0                               # reset the self.t2_i to 0, so we could if we want transform again
+
+# --------------------------------------- returns if the rectangle is a wall ----------------------------------------- #
 
     def is_wall(self):
         return self.wall
+
+# ------------------------------------- returns if the rectangle is the finish --------------------------------------- #
 
     def is_finish(self):
         return self.finish
@@ -362,12 +365,11 @@ class Rectangle:
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-class Choice:
+class Choice:                                        # here we have the buttons on top
 
     def __init__(self, normal_img, clicked_img, hover_img, choice):
-
-        self.choice1_img = normal_img
-        self.choice2_img = clicked_img
+        self.choice1_img = normal_img                # here we get the images for the buttons as well as which button
+        self.choice2_img = clicked_img               # the current instance is e.g. "WALL", "START", "DFS, ...
         self.hover_img = hover_img
 
         self.rect = self.choice1_img.get_rect()
@@ -377,16 +379,12 @@ class Choice:
 
 # ------------------------------------------------- draw function ---------------------------------------------------- #
 
-    def draw(self, bx, by, pos):
-
-        self.rect.topleft = (bx, by)
-
-        if self.rect.collidepoint(pos):
-
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+    def draw(self, bx, by, pos):                        # here we draw these buttons on the given positions
+        self.rect.topleft = (bx, by)                    # and change the button-images if clicked or hovered
+        if self.rect.collidepoint(pos):                 # also it returns what this button is when clicked otherwise
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:  # it will return "NULL"
                 self.clicked = True
                 display.blit(self.choice2_img, (self.rect.x, self.rect.y))
-
                 return self.choice
 
             elif pygame.mouse.get_pressed()[0] != 1:
@@ -406,11 +404,11 @@ class Choice:
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-def dfs(rectangles, graph, current):
-    if current not in visit:
-        visit.append(current)
-        key = (current[0], current[1])
-        for neighbor in graph[key]:
+def dfs(rectangles, graph, current):                        # here we write the oder of the rectangles into visit
+    if current not in visit:                                # for DFS and check if the rectangle is a wall
+        visit.append(current)                               # TODO: when finish is added need to check if algorithm
+        key = (current[0], current[1])                      # TODO: is finished and make it stop as well as print the
+        for neighbor in graph[key]:                         # TODO: path which was calculated by the DFS
             if not rectangles[neighbor[0]][neighbor[1]].is_wall():
                 dfs(rectangles, graph, neighbor)
 
@@ -424,8 +422,8 @@ def dfs(rectangles, graph, current):
 # ----------------------------------------------- generate neighbors ------------------------------------------------- #
 
 
-def generate_neighbors():
-    graph = {}
+def generate_neighbors():                                   # generates a dictionary which tells us what the neighbors
+    graph = {}                                              # of any given rectangle is and returns this dictionary
     for o in range(0, 35):
         for i in range(0, 62):
 
@@ -471,12 +469,12 @@ def follow_cursor(pos, rect):
 # ------------------------------------------- initialize screen function --------------------------------------------- #
 
 
-def init_screen():
-    rectangles = []
-    for i in range(0, 35):
-        new_rectangle = []
-        for o in range(0, 62):
-            new_rectangle.append(Rectangle(start_img))
+def init_screen():                                          # initializes the screen.
+    rectangles = []                                         # calls the __init__ function from Rectangle with the
+    for i in range(0, 35):                                  # starting image for every rectangle which will be on screen
+        new_rectangle = []                                  # and also calls for each of them the draw function as well
+        for o in range(0, 62):                              # as add them sorted into an array within an array which
+            new_rectangle.append(Rectangle(start_img))      # represent: ---------------- [row][column] ----------------
             new_rectangle[o].draw(o * 30, i * 30 + 30)
         rectangles.append(new_rectangle)
 
@@ -602,9 +600,9 @@ def main():
                 if len(visit) != 0 and c == 0:
                     c = 1
                     for o in visit:
-                        print(o)
-                        threads[o[0]][o[1]].start()
-                        threads[o[0]][o[1]].join()
+                        if o != current_rectangle:
+                            threads[o[0]][o[1]].start()
+                            pygame.time.delay(2)
 
                     threads = []
                     for o in range(0, 35):
