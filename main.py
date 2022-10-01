@@ -502,10 +502,8 @@ def transformation_checking(rectangle):
 # --------------------------------------- transforms if its already checked ------------------------------------------ #
 
 
-# def transformation_checked(pos, rectangles):
-#     for i in range(0, 35):
-#         for o in range(0, 62):
-#             rectangles[i][o].transform_is_checked(pos)
+def transformation_checked(rectangle):
+    rectangle.transform_is_checked()
 
 
 # ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
@@ -593,7 +591,7 @@ def main():
         if current_choice != "NULL":
             algorithm_choice = current_choice
 
-        match algorithm_choice:                             # here the algorithms will be used
+        match algorithm_choice:                                                     # here the algorithms will be used
             case "DFS":
                 if z == 0:
                     dfs(rectangles, graph, current_rectangle)
@@ -601,10 +599,6 @@ def main():
                     c = 0
                     z += 1
 
-                else:
-                    pass
-
-            case "GREEDY":
                 if len(visit) != 0 and c == 0:
                     c = 1
                     for o in visit:
@@ -618,6 +612,9 @@ def main():
                         for i in range(0, 62):
                             trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
                         threads.append(trd)
+
+            case "GREEDY":
+                pass
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
