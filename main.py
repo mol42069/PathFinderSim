@@ -6,6 +6,8 @@
 
 
 import pygame
+import sys
+import threading
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -27,7 +29,7 @@ y = 1080
 screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
-
+visit = []
 
 # ----------------------------------------------------- images ------------------------------------------------------- #
 
@@ -228,10 +230,12 @@ class Rectangle:
 
         self.start = False
         self.finish = False
+
         self.wall = False
         self.wall_building = False
         self.wall_disassembly = False
         self.wall_built = False
+
         self.w_b = 0
         self.left_click = False
         self.right_click = False
@@ -302,7 +306,7 @@ class Rectangle:
 
                     elif pygame.mouse.get_pressed()[0] != 1:
                         self.left_click = False
-                    print(self.start)
+
                     return None
 
             case "START_DEL":
@@ -324,47 +328,32 @@ class Rectangle:
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform_is_checking(self, pos):
-        if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
-                self.left_click = True
-                self.is_transforming = True
+    def transform_is_checking(self):
+        while self.t1_i < 10:
+            w_h = self.t1_i * 3
+            pygame.draw.rect(display, green, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+            pygame.display.flip()
+            self.t1_i += 1
 
-        elif pygame.mouse.get_pressed()[0] != 1:
-            self.left_click = False
-
-        if self.is_transforming:
-            if self.t1_i < 10:
-                w_h = self.t1_i * 3
-
-                pygame.draw.rect(display, green, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
-                pygame.display.flip()
-                self.t1_i += 1
-            else:
-                self.t1_i = 0
-                self.is_transforming = False
+        self.t1_i = 0
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    def transform_is_checked(self, pos):
-        if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
-                self.left_click = True
-                self.is_transforming = True
+    def transform_is_checked(self):
+        if self.t2_i < 10:
+            w_h = self.t2_i * 3
+            pygame.draw.rect(display, blue, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
+            pygame.display.flip()
+            self.t2_i += 1
+        else:
+            self.t2_i = 0
 
-        elif pygame.mouse.get_pressed()[0] != 1:
-            self.left_click = False
+    def is_wall(self):
+        return self.wall
 
-        if self.is_transforming:
-            if self.t2_i < 10:
-                w_h = self.t2_i * 3
-                pygame.draw.rect(display, blue, pygame.Rect(self.rect.x, self.rect.y, w_h, w_h))
-                pygame.display.flip()
-                self.t2_i += 1
+    def is_finish(self):
+        return self.finish
 
-            else:
-                self.t2_i = 0
-                self.is_transforming = False
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -417,9 +406,13 @@ class Choice:
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
-def dfs():
-    # visited = set()
-    pass
+def dfs(rectangles, graph, current):
+    if current not in visit:
+        visit.append(current)
+        key = (current[0], current[1])
+        for neighbor in graph[key]:
+            if not rectangles[neighbor[0]][neighbor[1]].is_wall():
+                dfs(rectangles, graph, neighbor)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -428,6 +421,45 @@ def dfs():
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
+# ----------------------------------------------- generate neighbors ------------------------------------------------- #
+
+
+def generate_neighbors():
+    graph = {}
+    for o in range(0, 35):
+        for i in range(0, 62):
+
+            if o == 0 or o == 34:
+                if o == 0:
+                    if i == 0:
+                        graph.update({(o, i): [(o + 1, i), (o, i + 1)]})
+
+                    elif i == 61:
+                        graph.update({(o, i): [(o + 1, i), (o, i - 1)]})
+
+                    else:
+                        graph.update({(o, i): [(o + 1, i), (o, i + 1), (o, i - 1)]})
+                elif o == 34:
+                    if i == 0:
+                        graph.update({(o, i): [(o - 1, i), (o, i + 1)]})
+
+                    elif i == 61:
+                        graph.update({(o, i): [(o - 1, i), (o, i - 1)]})
+
+                    else:
+                        graph.update({(o, i): [(o - 1, i), (o, i + 1), (o, i - 1)]})
+
+            elif i == 0 or i == 61:
+                if i == 0:
+                    graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1)]})
+
+                if i == 61:
+                    graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i - 1)]})
+
+            else:
+                graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1), (o, i - 1)]})
+
+    return graph
 
 # --------------------------------------------- follow cursor function ----------------------------------------------- #
 
@@ -463,19 +495,17 @@ def rectangle_clicked(pos, rectangles, choice):
 # -------------------------------------- transforms if its currently checked ----------------------------------------- #
 
 
-def transformation_checking(pos, rectangles):
-    for i in range(0, 35):
-        for o in range(0, 62):
-            rectangles[i][o].transform_is_checking(pos)
+def transformation_checking(rectangle):
+    rectangle.transform_is_checking()
 
 
 # --------------------------------------- transforms if its already checked ------------------------------------------ #
 
 
-def transformation_checked(pos, rectangles):
-    for i in range(0, 35):
-        for o in range(0, 62):
-            rectangles[i][o].transform_is_checked(pos)
+# def transformation_checked(pos, rectangles):
+#     for i in range(0, 35):
+#         for o in range(0, 62):
+#             rectangles[i][o].transform_is_checked(pos)
 
 
 # ------------------------------------- gives back which algorithm was chosen ---------------------------------------- #
@@ -501,7 +531,6 @@ def start_rectangle(pos, rectangles, choice, current_start):
                     jupp = rectangles[i][o].mouse_rectangle(pos, choice)
                     if jupp:
                         coordinates = (i, o)
-                        print(coordinates)
                         return coordinates
 
     elif choice == "START_DEL":
@@ -528,7 +557,7 @@ def start_rectangle(pos, rectangles, choice, current_start):
 
 
 def main():
-
+    sys.setrecursionlimit(3000)
     running = True
     clock = pygame.time.Clock()
 
@@ -545,6 +574,16 @@ def main():
     algorithm_choice = "WALL"
     start_exists = False
     coordinates = (0, 0)
+    graph = generate_neighbors()
+    z = 1
+    c = 1
+    current_rectangle = (0, 0)
+    threads = []
+    for o in range(0, 35):
+        trd = []
+        for i in range(0, 62):
+            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+        threads.append(trd)
 
     while running:
         pos = pygame.mouse.get_pos()
@@ -556,10 +595,29 @@ def main():
 
         match algorithm_choice:                             # here the algorithms will be used
             case "DFS":
-                transformation_checking(pos, rectangles)
+                if z == 0:
+                    dfs(rectangles, graph, current_rectangle)
+                    print("is here")
+                    c = 0
+                    z += 1
+
+                else:
+                    pass
 
             case "GREEDY":
-                transformation_checked(pos, rectangles)
+                if len(visit) != 0 and c == 0:
+                    c = 1
+                    for o in visit:
+                        print(o)
+                        threads[o[0]][o[1]].start()
+                        threads[o[0]][o[1]].join()
+
+                    threads = []
+                    for o in range(0, 35):
+                        trd = []
+                        for i in range(0, 62):
+                            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+                        threads.append(trd)
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
@@ -567,6 +625,10 @@ def main():
             case "CLEAR":
                 rectangles = init_screen()
                 algorithm_choice = "WALL"
+                z = 1
+                c = 1
+                start_exists = False
+                visit.clear()
 
             case "START":
                 if start_exists:
@@ -574,6 +636,9 @@ def main():
 
                 else:
                     starting_coordinates = start_rectangle(pos, rectangles, algorithm_choice, start_exists)
+                    if starting_coordinates is not None:
+                        current_rectangle = starting_coordinates
+                        z = 0
 
                 if starting_coordinates is None:
                     starting_coordinates = coordinates
