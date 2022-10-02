@@ -31,6 +31,9 @@ screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
 visit = []
+road = []
+road_f = []
+visited_tf = []
 is_finished = False
 
 # ----------------------------------------------------- images ------------------------------------------------------- #
@@ -423,20 +426,29 @@ class Choice:                                        # here we have the buttons 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
-# TODO: make it work if finish not in tight squeeze
-# BTW why the fuck isn't it working
+# TODO: make the final path called road/road_f work properly
+# currently does some weird shit and takes a long time after it got to the end
 
-def dfs(rectangles, graph, current, finished):              # here we write the oder of the rectangles into visit
+def dfs(rectangles, graph, current):                        # here we write the oder of the rectangles into visit
     if rectangles[current[0]][current[1]].is_finish():      # for DFS and check if the rectangle is a wall
-        return True
+        for o in visit:
+            visited_tf.append(o)
 
-    elif not finished:
-        if current not in visit:
-            visit.append(current)
-            key = (current[0], current[1])
-            for neighbor in graph[key]:
-                if not rectangles[neighbor[0]][neighbor[1]].is_wall():
-                    finished = dfs(rectangles, graph, neighbor, finished)
+    if current in road and len(visited_tf) == 0:
+        try:
+            print(current)
+            road.remove(current)
+
+        except IndexError:
+            pass
+
+    if current not in visit:
+        visit.append(current)
+        road.append(current)
+        key = (current[0], current[1])
+        for neighbor in graph[key]:
+            if not rectangles[neighbor[0]][neighbor[1]].is_wall():
+                dfs(rectangles, graph, neighbor)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -619,17 +631,28 @@ def main():
         match algorithm_choice:                                                     # here the algorithms will be used
             case "DFS":
                 if z == 0:
-                    dfs(rectangles, graph, current_rectangle, False)
+                    dfs(rectangles, graph, current_rectangle)
                     print("is here")
                     c = 0
                     z += 1
 
-                if len(visit) != 0 and c == 0:
+                if len(visited_tf) != 0 and c == 0:
                     c = 1
-                    for o in visit:
+                    for o in visited_tf:
                         if o != current_rectangle:
-                            threads[o[0]][o[1]].start()
+                            try:
+                                threads[o[0]][o[1]].start()
+
+                            except RuntimeError:
+                                break
+
                             pygame.time.delay(2)
+
+                    print(road_f)
+                    if len(road_f) != 0:
+
+                        for o in road_f:
+                            rectangles[o[0]][o[1]].transform_is_checked()
 
                     threads = []
                     for o in range(0, 35):
@@ -645,12 +668,14 @@ def main():
                 rectangle_clicked(pos, rectangles, algorithm_choice)
 
             case "CLEAR":
+                rectangles.clear()
                 rectangles = init_screen()
                 algorithm_choice = "WALL"
                 z = 1
                 c = 1
                 start_exists = False
                 visit.clear()
+                visited_tf.clear()
 
             case "START":
                 if start_exists:
