@@ -23,6 +23,7 @@ blue = (0, 0, 255)
 white = (100, 100, 100)
 start = (255, 255, 255)
 black = (0, 0, 0)
+red = (255, 0, 0)
 pygame.init()
 x = 1920
 y = 1080
@@ -30,6 +31,7 @@ screen_size = (x, y)
 display = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 display.fill(grey)
 visit = []
+is_finished = False
 
 # ----------------------------------------------------- images ------------------------------------------------------- #
 
@@ -54,6 +56,9 @@ wall_clicked_img = pygame.image.load('images/wall_clicked.png').convert_alpha()
 start_b_img = pygame.image.load('images/start.png').convert_alpha()
 start_b_hover_img = pygame.image.load('images/start_hover.png').convert_alpha()
 start_b_clicked_img = pygame.image.load('images/start_clicked.png').convert_alpha()
+finish_img = pygame.image.load('images/finish.png').convert_alpha()
+finish_hover_img = pygame.image.load('images/finish_hover.png').convert_alpha()
+finish_clicked_img = pygame.image.load('images/finish_clicked.png').convert_alpha()
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -322,6 +327,21 @@ class Rectangle:
 
                 return None
 
+            case "FINISH":
+                if self.rect.collidepoint(pos):
+                    if pygame.mouse.get_pressed()[0] == 1 and not self.left_click:
+                        self.left_click = True
+                        self.finish = True
+                        rec = pygame.Rect(self.rect.x, self.rect.y, 9*3, 9 * 3)
+                        self.rect = pygame.draw.rect(display, red, rec)
+                        pygame.display.flip()
+                        return True
+
+                    elif pygame.mouse.get_pressed()[0] != 1:
+                        self.left_click = False
+
+                    return None
+
             case "END":
                 pass
 
@@ -403,14 +423,20 @@ class Choice:                                        # here we have the buttons 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
+# TODO: make it work if finish not in tight squeeze
+# BTW why the fuck isn't it working
 
-def dfs(rectangles, graph, current):                        # here we write the oder of the rectangles into visit
-    if current not in visit:                                # for DFS and check if the rectangle is a wall
-        visit.append(current)                               # TODO: when finish is added need to check if algorithm
-        key = (current[0], current[1])                      # TODO: is finished and make it stop as well as print the
-        for neighbor in graph[key]:                         # TODO: path which was calculated by the DFS
-            if not rectangles[neighbor[0]][neighbor[1]].is_wall():
-                dfs(rectangles, graph, neighbor)
+def dfs(rectangles, graph, current, finished):              # here we write the oder of the rectangles into visit
+    if rectangles[current[0]][current[1]].is_finish():      # for DFS and check if the rectangle is a wall
+        return True
+
+    elif not finished:
+        if current not in visit:
+            visit.append(current)
+            key = (current[0], current[1])
+            for neighbor in graph[key]:
+                if not rectangles[neighbor[0]][neighbor[1]].is_wall():
+                    finished = dfs(rectangles, graph, neighbor, finished)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -561,6 +587,7 @@ def main():
                Choice(greed_img, greed_clicked_img, greed_hover_img, "GREEDY"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
+               Choice(finish_img, finish_clicked_img, finish_hover_img, "FINISH"),
                Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR")
                ]
 
@@ -592,7 +619,7 @@ def main():
         match algorithm_choice:                                                     # here the algorithms will be used
             case "DFS":
                 if z == 0:
-                    dfs(rectangles, graph, current_rectangle)
+                    dfs(rectangles, graph, current_rectangle, False)
                     print("is here")
                     c = 0
                     z += 1
@@ -644,6 +671,9 @@ def main():
                 else:
                     start_exists = True
                     coordinates = starting_coordinates
+
+            case "FINISH":
+                rectangle_clicked(pos, rectangles, algorithm_choice)
 
         if exit_button.draw():
             i += 1
