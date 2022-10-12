@@ -253,8 +253,6 @@ class Rectangle:
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
-    # TODO: add the finish
-
     def mouse_rectangle(self, pos, choice="WALL"):  # this function checks if a button is pressed as well as in which
         match choice:                               # mode we are currently in. If pressed we change the color of the
             case "WALL":                            # rectangle in the way the current mode tells us
@@ -430,42 +428,52 @@ class DFS:
 
     def __init__(self):
         self.reached_finish = False
+        self.finish = (-1, -1)
         self.stop = False
 
     # TODO: make the final path called road/road_f work properly
-    # TODO: currently does some weird shit and takes a long time after it got to the end
+    # TODO: currently does some weird shit in the middle of going to the finish it just stops and freezes the program
+    # TODO: and doesn't stop at the finish after freeze is over the whole site is blue.
 
-    def dfs(self, rectangles, graph, current):                  # here we write the oder of the rectangles into visit
+    def find_finish(self, rectangles, graph, current):          # here we write the oder of the rectangles into visit
         if rectangles[current[0]][current[1]].is_finish():      # for DFS and check if the rectangle is a wall
             self.reached_finish = True
+            self.finish = current
             for o in visit:
                 visited_tf.append(o)
 
-            if not self.stop:
-                for o in road:
-                    if road_f.count(o) < 1:
-                        road_f.append(o)
-
-                    else:
-                        self.stop = True
-                        continue
-
-        if (current in road) and (len(visited_tf) == 0) and (not self.reached_finish) and self.stop:
-            try:
-                print(current)
-                road.remove(current)
-
-            except IndexError:
-                pass
-
         if current not in visit:
             visit.append(current)
-            road.append(current)
             key = (current[0], current[1])
             for neighbor in graph[key]:
                 if not rectangles[neighbor[0]][neighbor[1]].is_wall():
-                    self.dfs(rectangles, graph, neighbor)
+                    self.find_finish(rectangles, graph, neighbor)
 
+# ---------------------------------------------------- find road ----------------------------------------------------- #
+
+    def find_path_optimal(self, graph):
+        if self.finish != (-1, -1):
+            path = visited_tf
+            index = len(visited_tf)
+            while index >= 0:
+                index -= 1
+                current = visited_tf[index]
+                curr_best = (index, current)
+
+                for neighbor in graph[current]:
+                    if neighbor in visited_tf:
+                        if curr_best[0] > visited_tf.index(neighbor):
+                            for o in range(visited_tf.index(neighbor) + 1, curr_best[0]):
+                                try:
+                                    path.remove(visited_tf[o])
+
+                                except IndexError:
+                                    pass
+
+                            index = visited_tf.index(neighbor)
+                            curr_best = (index, neighbor)
+            return path
+        return None
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -484,7 +492,7 @@ def generate_neighbors():                                   # generates a dictio
             if o == 0 or o == 34:
                 if o == 0:
                     if i == 0:
-                        graph.update({(o, i): [(o + 1, i), (o, i + 1)]})
+                        graph.update({(o, i): [(o, i + 1), (o + 1, i)]})
 
                     elif i == 61:
                         graph.update({(o, i): [(o + 1, i), (o, i - 1)]})
@@ -646,9 +654,12 @@ def main():
 
         match algorithm_choice:                                                     # here the algorithms will be used
             case "DFS":
+
                 if z == 0:
+                    visited_tf.clear()
                     dfs = DFS()
-                    dfs.dfs(rectangles, graph, current_rectangle)
+                    dfs_thread = threading.Thread(target=dfs.find_finish(rectangles, graph, current_rectangle))
+                    dfs_thread.start()
                     print("is here")
                     c = 0
                     z += 1
@@ -665,20 +676,11 @@ def main():
 
                             pygame.time.delay(2)
 
-                    print(road_f)
-                    if len(road_f) != 0:
-                        for o in visited_tf:
-                            if o != current_rectangle:
-                                try:
-                                    rectangles[o[0]][o[1]].transform_is_checked()
+                    path = dfs.find_path_optimal(graph)
+                    if path is not None:
+                        for o in path:
+                            transformation_checked(rectangles[o[0]][o[1]])
 
-                                except RuntimeError:
-                                    break
-
-                                pygame.time.delay(2)
-
-                    road.clear()
-                    road_f.clear()
                     threads = []
 
                     for o in range(0, 35):
