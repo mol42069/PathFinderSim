@@ -451,7 +451,7 @@ class DFS:
 
 # ---------------------------------------------------- find road ----------------------------------------------------- #
 
-    def find_path_optimal(self, graph):
+    def find_path_optimal(self, graph, starting_rectangle):
         if self.finish != (-1, -1):                             # we check that we have a finish
             path = []
             temp_path = []
@@ -462,8 +462,12 @@ class DFS:
                 for neighbor in graph[current]:                 # we go through all neighbors for the current rectangle
                     if neighbor in visited_tf:
                         if curr_best[0] > visited_tf.index(neighbor):   # check if the index of the neighbor is smaller
+                            temp_index = visited_tf.index(neighbor)
+                            if index < temp_index:
+                                temp_path.append(neighbor)
+                            else:
+                                temp_path.insert(0, neighbor)
 
-                            temp_path.insert(visited_tf.index(neighbor) + 1, neighbor)
                             index = visited_tf.index(neighbor)
                             curr_best = (index, neighbor)
 
@@ -473,7 +477,12 @@ class DFS:
                     path.append(temp_path[0])
 
                 else:
-                    return path
+                    r_path = []
+                    for rec in path:
+                        if starting_rectangle != rec:
+                            r_path.insert(0, rec)
+
+                    return r_path
 
                 temp_path.clear()
 
@@ -642,7 +651,6 @@ def main():
     c = 1
     current_rectangle = (0, 0)
 
-
     while running:
         pos = pygame.mouse.get_pos()
         clock.tick()
@@ -680,7 +688,7 @@ def main():
 
                             pygame.time.delay(1)
 
-                    path = dfs.find_path_optimal(graph)
+                    path = dfs.find_path_optimal(graph, current_rectangle)
                     if path is not None:
                         for o in path:
                             transformation_checked(rectangles[o[0]][o[1]])
