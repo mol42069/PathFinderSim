@@ -452,27 +452,31 @@ class DFS:
 # ---------------------------------------------------- find road ----------------------------------------------------- #
 
     def find_path_optimal(self, graph):
-        if self.finish != (-1, -1):
-            path = visited_tf
-            index = len(visited_tf)
+        if self.finish != (-1, -1):                             # we check that we have a finish
+            path = []
+            temp_path = []
+            index = len(visited_tf)                             # we set the starting index to the last possible index
+            current = self.finish                               # we set the current to the finish position
             while index >= 0:
-                index -= 1
-                current = visited_tf[index]
-                curr_best = (index, current)
-
-                for neighbor in graph[current]:
+                curr_best = (index, current)                    # we create the curr best to remember the best so far
+                for neighbor in graph[current]:                 # we go through all neighbors for the current rectangle
                     if neighbor in visited_tf:
-                        if curr_best[0] > visited_tf.index(neighbor):
-                            for o in range(visited_tf.index(neighbor) + 1, curr_best[0]):
-                                try:
-                                    path.remove(visited_tf[o])
+                        if curr_best[0] > visited_tf.index(neighbor):   # check if the index of the neighbor is smaller
 
-                                except IndexError:
-                                    pass
-
+                            temp_path.insert(visited_tf.index(neighbor) + 1, neighbor)
                             index = visited_tf.index(neighbor)
                             curr_best = (index, neighbor)
-            return path
+
+                    current = curr_best[1]
+                print(temp_path)
+                if len(temp_path) != 0:
+                    path.append(temp_path[0])
+
+                else:
+                    return path
+
+                temp_path.clear()
+
         return None
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -637,12 +641,7 @@ def main():
     z = 1
     c = 1
     current_rectangle = (0, 0)
-    threads = []
-    for o in range(0, 35):
-        trd = []
-        for i in range(0, 62):
-            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
-        threads.append(trd)
+
 
     while running:
         pos = pygame.mouse.get_pos()
@@ -654,10 +653,15 @@ def main():
 
         match algorithm_choice:                                                     # here the algorithms will be used
             case "DFS":
-
+                threads = []
+                for o in range(0, 35):
+                    trd = []
+                    for i in range(0, 62):
+                        trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+                    threads.append(trd)
+                dfs = DFS()
                 if z == 0:
                     visited_tf.clear()
-                    dfs = DFS()
                     dfs_thread = threading.Thread(target=dfs.find_finish(rectangles, graph, current_rectangle))
                     dfs_thread.start()
                     print("is here")
@@ -674,20 +678,12 @@ def main():
                             except RuntimeError:
                                 break
 
-                            pygame.time.delay(2)
+                            pygame.time.delay(1)
 
                     path = dfs.find_path_optimal(graph)
                     if path is not None:
                         for o in path:
                             transformation_checked(rectangles[o[0]][o[1]])
-
-                    threads = []
-
-                    for o in range(0, 35):
-                        trd = []
-                        for i in range(0, 62):
-                            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
-                        threads.append(trd)
 
             case "GREEDY":
                 pass
