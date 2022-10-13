@@ -470,7 +470,6 @@ class DFS:
                             curr_best = (index, neighbor)
 
                     current = curr_best[1]
-                print(temp_path)
                 if len(temp_path) != 0:
                     path.append(temp_path[0])
 
@@ -510,13 +509,13 @@ class BFS:
 
         while self.queue and not self.finish:               # Creating loop to visit each node
             m = self.queue.pop(0)
-            if rectangles[m[0]][m[1]].is_finish():
-                self.finish = True
             for neighbour in self.graph[m]:
                 if neighbour not in self.visited:
+                    if rectangles[neighbour[0]][neighbour[1]].is_finish():
+                        self.finish = True
                     self.visited.append(neighbour)
                     self.queue.append(neighbour)
-
+        print(self.visited)
         return self.visited
 
 # ---------------------------------------------------- find path ----------------------------------------------------- #
@@ -542,7 +541,6 @@ class BFS:
                             curr_best = (index, neighbor)
 
                     current = curr_best[1]
-                print(temp_path)
                 if len(temp_path) != 0:
                     path.append(temp_path[0])
 
@@ -702,7 +700,7 @@ def main():
     sys.setrecursionlimit(3000)
     running = True
     clock = pygame.time.Clock()
-
+    visited_bfs = None
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
                Choice(greed_img, greed_clicked_img, greed_hover_img, "BFS"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
@@ -743,7 +741,6 @@ def main():
                     visited_tf.clear()
                     dfs_thread = threading.Thread(target=dfs.find_finish(rectangles, graph, current_rectangle))
                     dfs_thread.start()
-                    print("is here")
                     c = 0
                     z += 1
 
@@ -757,19 +754,32 @@ def main():
                             except RuntimeError:
                                 break
 
-                            pygame.time.delay(1)
+                            pygame.time.delay(2)
 
                     path = dfs.find_path_optimal(graph, current_rectangle)
+                    threads = []
+                    for o in range(0, 35):
+                        trd = []
+                        for i in range(0, 62):
+                            trd.append(threading.Thread(target=transformation_checked, args=(rectangles[o][i],)))
+                        threads.append(trd)
+
                     if path is not None:
                         for o in path:
-                            transformation_checked(rectangles[o[0]][o[1]])
+                            try:
+                                threads[o[0]][o[1]].start()
+                            except RuntimeError:
+                                break
+
+                            pygame.time.delay(20)
 
             case "BFS":
                 bfs = BFS(graph)
-                visited_bfs = bfs.find_finish(current_rectangle, rectangles)
+                if visited_bfs is None:
+                    visited_bfs = bfs.find_finish(current_rectangle, rectangles)
 
-                for o in visited_bfs:
-                    transformation_checking(rectangles[o[0]][o[1]])
+                    for o in visited_bfs:
+                        transformation_checking(rectangles[o[0]][o[1]])
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
