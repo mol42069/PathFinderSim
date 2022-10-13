@@ -420,7 +420,7 @@ class Choice:                                        # here we have the buttons 
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
-# ---------------------------------------------------- algorithm ----------------------------------------------------- #
+# ------------------------------------------------------- DFS -------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -431,9 +431,7 @@ class DFS:
         self.finish = (-1, -1)
         self.stop = False
 
-    # TODO: make the final path called road/road_f work properly
-    # TODO: currently does some weird shit in the middle of going to the finish it just stops and freezes the program
-    # TODO: and doesn't stop at the finish after freeze is over the whole site is blue.
+# --------------------------------------------------- find finish ---------------------------------------------------- #
 
     def find_finish(self, rectangles, graph, current):          # here we write the oder of the rectangles into visit
         if rectangles[current[0]][current[1]].is_finish():      # for DFS and check if the rectangle is a wall
@@ -449,7 +447,7 @@ class DFS:
                 if not rectangles[neighbor[0]][neighbor[1]].is_wall():
                     self.find_finish(rectangles, graph, neighbor)
 
-# ---------------------------------------------------- find road ----------------------------------------------------- #
+# ---------------------------------------------------- find path ----------------------------------------------------- #
 
     def find_path_optimal(self, graph, starting_rectangle):
         if self.finish != (-1, -1):                             # we check that we have a finish
@@ -487,6 +485,79 @@ class DFS:
                 temp_path.clear()
 
         return None
+
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------- DFS -------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+class BFS:
+
+    def __init__(self, graph):
+        self.graph = graph
+        self.visited = []
+        self.queue = []
+        self.finish = False
+
+# --------------------------------------------------- find finish ---------------------------------------------------- #
+
+    def find_finish(self, starting_rec, rectangles):
+        self.visited.append(starting_rec)
+        self.queue.append(starting_rec)
+
+        while self.queue and not self.finish:               # Creating loop to visit each node
+            m = self.queue.pop(0)
+            if rectangles[m[0]][m[1]].is_finish():
+                self.finish = True
+            for neighbour in self.graph[m]:
+                if neighbour not in self.visited:
+                    self.visited.append(neighbour)
+                    self.queue.append(neighbour)
+
+        return self.visited
+
+# ---------------------------------------------------- find path ----------------------------------------------------- #
+
+    def find_path_optimal(self, starting_rectangle):
+        if self.finish != (-1, -1):                         # we check that we have a finish
+            path = []
+            temp_path = []
+            index = len(visited_tf)                         # we set the starting index to the last possible index
+            current = self.finish                           # we set the current to the finish position
+            while index >= 0:
+                curr_best = (index, current)                # we create the curr best to remember the best so far
+                for neighbor in self.graph[current]:        # we go through all neighbors for the current rectangle
+                    if neighbor in visited_tf:
+                        if curr_best[0] > visited_tf.index(neighbor):  # check if the index of the neighbor is smaller
+                            temp_index = visited_tf.index(neighbor)
+                            if index < temp_index:
+                                temp_path.append(neighbor)
+                            else:
+                                temp_path.insert(0, neighbor)
+
+                            index = visited_tf.index(neighbor)
+                            curr_best = (index, neighbor)
+
+                    current = curr_best[1]
+                print(temp_path)
+                if len(temp_path) != 0:
+                    path.append(temp_path[0])
+
+                else:
+                    r_path = []
+                    for rec in path:
+                        if starting_rectangle != rec:
+                            r_path.insert(0, rec)
+
+                    return r_path
+
+                temp_path.clear()
+
+        return None
+
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -633,7 +704,7 @@ def main():
     clock = pygame.time.Clock()
 
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
-               Choice(greed_img, greed_clicked_img, greed_hover_img, "GREEDY"),
+               Choice(greed_img, greed_clicked_img, greed_hover_img, "BFS"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
                Choice(finish_img, finish_clicked_img, finish_hover_img, "FINISH"),
@@ -693,8 +764,12 @@ def main():
                         for o in path:
                             transformation_checked(rectangles[o[0]][o[1]])
 
-            case "GREEDY":
-                pass
+            case "BFS":
+                bfs = BFS(graph)
+                visited_bfs = bfs.find_finish(current_rectangle, rectangles)
+
+                for o in visited_bfs:
+                    transformation_checking(rectangles[o[0]][o[1]])
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
