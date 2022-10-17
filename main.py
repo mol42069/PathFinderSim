@@ -499,7 +499,8 @@ class BFS:
         self.graph = graph
         self.visited = []
         self.queue = []
-        self.finish = False
+        self.finish = (-1, -1)
+        self.finished = False
 
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
@@ -507,12 +508,14 @@ class BFS:
         self.visited.append(starting_rec)
         self.queue.append(starting_rec)
 
-        while self.queue and not self.finish:               # Creating loop to visit each node
+        while self.queue and not self.finished:               # Creating loop to visit each node
             m = self.queue.pop(0)
             for neighbour in self.graph[m]:
-                if neighbour not in self.visited:
+                if neighbour not in self.visited and not rectangles[neighbour[0]][neighbour[1]].is_wall():
                     if rectangles[neighbour[0]][neighbour[1]].is_finish():
-                        self.finish = True
+                        self.finish = neighbour
+                        self.finished = True
+                        return self.visited
                     self.visited.append(neighbour)
                     self.queue.append(neighbour)
         print(self.visited)
@@ -524,20 +527,20 @@ class BFS:
         if self.finish != (-1, -1):                         # we check that we have a finish
             path = []
             temp_path = []
-            index = len(visited_tf)                         # we set the starting index to the last possible index
+            index = len(self.visited) - 1                         # we set the starting index to the last possible index
             current = self.finish                           # we set the current to the finish position
             while index >= 0:
                 curr_best = (index, current)                # we create the curr best to remember the best so far
-                for neighbor in self.graph[current]:        # we go through all neighbors for the current rectangle
-                    if neighbor in visited_tf:
-                        if curr_best[0] > visited_tf.index(neighbor):  # check if the index of the neighbor is smaller
-                            temp_index = visited_tf.index(neighbor)
+                for neighbor in self.graph[current]:  # we go through neighbors for the current rectangle
+                    if neighbor in self.visited:
+                        if curr_best[0] > self.visited.index(neighbor):  # check if the index of the neighbor is smaller
+                            temp_index = self.visited.index(neighbor)
                             if index < temp_index:
                                 temp_path.append(neighbor)
                             else:
                                 temp_path.insert(0, neighbor)
 
-                            index = visited_tf.index(neighbor)
+                            index = self.visited.index(neighbor)
                             curr_best = (index, neighbor)
 
                     current = curr_best[1]
@@ -549,7 +552,6 @@ class BFS:
                     for rec in path:
                         if starting_rectangle != rec:
                             r_path.insert(0, rec)
-
                     return r_path
 
                 temp_path.clear()
@@ -718,6 +720,7 @@ def main():
     graph = generate_neighbors()
     z = 1
     c = 1
+    t = 1
     current_rectangle = (0, 0)
 
     while running:
@@ -774,12 +777,45 @@ def main():
                             pygame.time.delay(20)
 
             case "BFS":
+                threads = []
+                for o in range(0, 35):
+                    trd = []
+                    for i in range(0, 62):
+                        trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+                    threads.append(trd)
                 bfs = BFS(graph)
-                if visited_bfs is None:
+                if t == 1:
                     visited_bfs = bfs.find_finish(current_rectangle, rectangles)
-
+                    t -= 1
                     for o in visited_bfs:
-                        transformation_checking(rectangles[o[0]][o[1]])
+                        try:
+                            if o != current_rectangle:
+                                threads[o[0]][o[1]].start()
+
+                        except RuntimeError:
+                            pass
+
+                        pygame.time.delay(2)
+
+                    path = bfs.find_path_optimal(current_rectangle)
+                    threads_ff = []
+                    for o in range(0, 35):
+                        trd_ff = []
+                        for i in range(0, 62):
+                            trd_ff.append(threading.Thread(target=transformation_checked, args=(rectangles[o][i],)))
+                        threads_ff.append(trd_ff)
+                    try:
+                        for o in path:
+                            try:
+                                threads_ff[o[0]][o[1]].start()
+                                pygame.time.delay(20)
+                            except RuntimeError:
+                                pass
+
+                    except TypeError:
+                        pass
+
+                    visited_bfs.clear()
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
@@ -790,6 +826,7 @@ def main():
                 algorithm_choice = "WALL"
                 z = 1
                 c = 1
+                t = 1
                 start_exists = False
                 visit.clear()
                 visited_tf.clear()
