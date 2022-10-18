@@ -582,6 +582,7 @@ def main():
     c = 1
     t = 1
     current_rectangle = (-1, -1)
+    alg_drawn = False
 
     while running:
         pos = pygame.mouse.get_pos()
@@ -601,6 +602,16 @@ def main():
                     threads.append(trd)
                 dfs = DFS()
                 if z == 0:
+                    if alg_drawn:
+                        for o in range(0, 35):
+                            for i in range(0, 62):
+                                if not rectangles[o][i].is_wall() \
+                                        and not rectangles[o][i].is_finish() \
+                                        and not rectangles[o][i].start:
+
+                                    alg_drawn = False
+                                    rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
+
                     visited_tf.clear()
                     dfs_thread = threading.Thread(target=dfs.find_finish(rectangles, graph, current_rectangle))
                     dfs_thread.start()
@@ -613,6 +624,7 @@ def main():
                         if o != current_rectangle:
                             try:
                                 threads[o[0]][o[1]].start()
+                                alg_drawn = True
 
                             except RuntimeError:
                                 break
@@ -646,12 +658,23 @@ def main():
                         threads.append(trd)
                     bfs = BFS(graph)
                     if t == 1:
+                        if alg_drawn:
+                            for o in range(0, 35):
+                                for i in range(0, 62):
+                                    if not rectangles[o][i].is_wall() \
+                                            and not rectangles[o][i].is_finish() \
+                                            and not rectangles[o][i].start:
+
+                                        alg_drawn = False
+                                        rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
+
                         visited_bfs = bfs.find_finish(current_rectangle, rectangles)
                         t -= 1
                         for o in visited_bfs:
                             try:
                                 if o != current_rectangle:
                                     threads[o[0]][o[1]].start()
+                                    alg_drawn = True
 
                             except RuntimeError:
                                 pass
