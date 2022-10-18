@@ -46,6 +46,9 @@ click_img = pygame.image.load('images/click.png').convert_alpha()
 dfs_img = pygame.image.load('images/DFS.png').convert_alpha()
 dfs_clicked_img = pygame.image.load('images/DFS_clicked.png').convert_alpha()
 dfs_hover_img = pygame.image.load('images/DFS_hover.png').convert_alpha()
+bfs_normal_img = pygame.image.load('images/BFS_normal.png').convert_alpha()
+bfs_clicked_img = pygame.image.load('images/BFS_clicked.png').convert_alpha()
+bfs_hover_img = pygame.image.load('images/BFS_hover.png').convert_alpha()
 start_img = pygame.image.load('images/starting.png').convert_alpha()
 clear_img = pygame.image.load('images/clear.png').convert_alpha()
 clear_clicked_img = pygame.image.load('images/clear_clicked.png').convert_alpha()
@@ -70,6 +73,7 @@ finish_clicked_img = pygame.image.load('images/finish_clicked.png').convert_alph
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
+# TODO: incorporate this into Choice... 
 
 class Button:                                   # is the EXIT-Button
 
@@ -168,54 +172,6 @@ class Button:                                   # is the EXIT-Button
         else:
             display.blit(self.image, (self.rect.x, self.rect.y))
             return False
-
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# -------------------------------------------------------------------------------------------------------------------- #
-# ------------------------------------ button which can move and changes on click ------------------------------------ #
-# -------------------------------------------------------------------------------------------------------------------- #
-# -------------------------------------------------------------------------------------------------------------------- #
-
-
-class ButtonCaM:                                # USELESS
-
-    def __init__(self, bx, by, image, cimage, scale_x=0.9, scale_y=0.9):
-
-        self.scale_x = scale_x
-        self.scale_y = scale_y
-
-        width = image.get_width()
-        height = image.get_height()
-        c_width = cimage.get_width()
-        c_height = cimage.get_height()
-
-        self.image = pygame.transform.scale(image, (int(width * scale_x), int(height * scale_y)))
-        self.clicked_img = pygame.transform.scale(cimage, (int(c_width * scale_x), int(c_height * scale_y)))
-
-        self.rect = image.get_rect()
-        self.rect.topleft = (bx, by)
-        self.clicked = False
-
-# ---------------------------------------------- draw moving function ------------------------------------------------ #
-
-    def draw_moving_clicking(self, pos):
-
-        action = False
-
-        if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-            action = True
-            self.clicked = True
-
-        if pygame.mouse.get_pressed()[0] == 1:
-            display.blit(self.clicked_img, (pos[0] - 5, pos[1] - 5))
-
-        if pygame.mouse.get_pressed()[0] == 0:
-            display.fill(grey)
-            display.blit(self.image, (pos[0] - 5, pos[1] - 5))
-            action = False
-            self.clicked = False
-
-        return action
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -343,8 +299,20 @@ class Rectangle:
 
                     return None
 
-            case "END":
-                pass
+            case "CLEAR":
+                self.t1_i = 0
+                self.t2_i = 0
+                self.is_transforming = False
+                self.start = False
+                self.finish = False
+                self.wall = False
+                self.wall_building = False
+                self.wall_disassembly = False
+                self.wall_built = False
+                self.w_b = 0
+                self.left_click = False
+                self.right_click = False
+                display.blit(self.starting_img, (self.rect.x, self.rect.y))
 
 # -------------------------------------- draw if mouse on rectangle function ----------------------------------------- #
 
@@ -702,9 +670,8 @@ def main():
     sys.setrecursionlimit(3000)
     running = True
     clock = pygame.time.Clock()
-    visited_bfs = None
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
-               Choice(greed_img, greed_clicked_img, greed_hover_img, "BFS"),
+               Choice(bfs_normal_img, bfs_clicked_img, bfs_hover_img, "BFS"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
                Choice(finish_img, finish_clicked_img, finish_hover_img, "FINISH"),
@@ -721,7 +688,7 @@ def main():
     z = 1
     c = 1
     t = 1
-    current_rectangle = (0, 0)
+    current_rectangle = (-1, -1)
 
     while running:
         pos = pygame.mouse.get_pos()
@@ -777,56 +744,60 @@ def main():
                             pygame.time.delay(20)
 
             case "BFS":
-                threads = []
-                for o in range(0, 35):
-                    trd = []
-                    for i in range(0, 62):
-                        trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
-                    threads.append(trd)
-                bfs = BFS(graph)
-                if t == 1:
-                    visited_bfs = bfs.find_finish(current_rectangle, rectangles)
-                    t -= 1
-                    for o in visited_bfs:
-                        try:
-                            if o != current_rectangle:
-                                threads[o[0]][o[1]].start()
-
-                        except RuntimeError:
-                            pass
-
-                        pygame.time.delay(2)
-
-                    path = bfs.find_path_optimal(current_rectangle)
-                    threads_ff = []
+                if current_rectangle != (-1, -1):
+                    threads = []
                     for o in range(0, 35):
-                        trd_ff = []
+                        trd = []
                         for i in range(0, 62):
-                            trd_ff.append(threading.Thread(target=transformation_checked, args=(rectangles[o][i],)))
-                        threads_ff.append(trd_ff)
-                    try:
-                        for o in path:
+                            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+                        threads.append(trd)
+                    bfs = BFS(graph)
+                    if t == 1:
+                        visited_bfs = bfs.find_finish(current_rectangle, rectangles)
+                        t -= 1
+                        for o in visited_bfs:
                             try:
-                                threads_ff[o[0]][o[1]].start()
-                                pygame.time.delay(20)
+                                if o != current_rectangle:
+                                    threads[o[0]][o[1]].start()
+
                             except RuntimeError:
                                 pass
 
-                    except TypeError:
-                        pass
+                            pygame.time.delay(2)
 
-                    visited_bfs.clear()
+                        path = bfs.find_path_optimal(current_rectangle)
+                        threads_ff = []
+                        for o in range(0, 35):
+                            trd_ff = []
+                            for i in range(0, 62):
+                                trd_ff.append(threading.Thread(target=transformation_checked, args=(rectangles[o][i],)))
+                            threads_ff.append(trd_ff)
+                        try:
+                            for o in path:
+                                try:
+                                    threads_ff[o[0]][o[1]].start()
+                                    pygame.time.delay(20)
+                                except RuntimeError:
+                                    pass
+
+                        except TypeError:
+                            pass
+
+                        visited_bfs.clear()
 
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
 
             case "CLEAR":
-                rectangles.clear()
-                rectangles = init_screen()
+                for o in range(0, 35):
+                    for i in range(0, 62):
+                        if not rectangles[o][i].is_wall():
+                            rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
                 algorithm_choice = "WALL"
                 z = 1
                 c = 1
                 t = 1
+                current_rectangle = (-1, -1)
                 start_exists = False
                 visit.clear()
                 visited_tf.clear()
