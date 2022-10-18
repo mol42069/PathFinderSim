@@ -39,9 +39,9 @@ is_finished = False
 # ----------------------------------------------------- images ------------------------------------------------------- #
 
 
-exit_img = pygame.image.load('images/exit.png').convert_alpha()
-exit_clicked_img = pygame.image.load('images/exit_clicked.png').convert_alpha()
-exit_hover_img = pygame.image.load('images/exit_hover.png').convert_alpha()
+exit_normal_img = pygame.image.load('images/EXIT_normal.png').convert_alpha()
+exit_clicked_img = pygame.image.load('images/EXIT_clicked.png').convert_alpha()
+exit_hover_img = pygame.image.load('images/EXIT_hover.png').convert_alpha()
 click_img = pygame.image.load('images/click.png').convert_alpha()
 dfs_img = pygame.image.load('images/DFS.png').convert_alpha()
 dfs_clicked_img = pygame.image.load('images/DFS_clicked.png').convert_alpha()
@@ -69,121 +69,12 @@ finish_clicked_img = pygame.image.load('images/finish_clicked.png').convert_alph
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
-# ------------------------------- button which can move and changes on click and hover ------------------------------- #
-# -------------------------------------------------------------------------------------------------------------------- #
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# TODO: incorporate this into Choice... 
-
-class Button:                                   # is the EXIT-Button
-
-    def __init__(self, bx, by, image, cimage, h_image, scale_x=0.9, scale_y=0.9):
-
-        self.scale_x = scale_x
-        self.scale_y = scale_y
-
-        width = image.get_width()
-        height = image.get_height()
-
-        c_width = cimage.get_width()
-        c_height = cimage.get_height()
-
-        h_width = h_image.get_width()
-        h_height = h_image.get_height()
-
-        self.image = pygame.transform.scale(image, (int(width * scale_x), int(height * scale_y)))
-        self.clicked_img = pygame.transform.scale(cimage, (int(c_width * scale_x), int(c_height * scale_y)))
-        self.hover_img = pygame.transform.scale(h_image, (int(h_width * scale_x), int(h_height * scale_y)))
-
-        self.rect = image.get_rect()
-        self.rect.topleft = (bx, by)
-        self.clicked = False
-
-# -------------------------------------------------- draw function --------------------------------------------------- #
-
-    def draw(self):
-
-        is_hovering = False
-        action = False
-        pos = pygame.mouse.get_pos()
-
-        if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-                action = True
-                self.clicked = True
-
-            else:
-                is_hovering = self.mouse_hover()
-
-        else:
-            action = False
-            if pygame.mouse.get_pressed()[0] == 1:
-                self.clicked = True
-
-        if pygame.mouse.get_pressed()[0] == 0:
-            action = False
-            self.clicked = False
-
-        if not is_hovering:
-            display.blit(self.image, (self.rect.x, self.rect.y))
-
-        return action
-
-# ---------------------------------------------- draw moving function ------------------------------------------------ #
-
-    def draw_moving(self, pos):
-
-        action = False
-        if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-            action = True
-            self.clicked = True
-
-        if pygame.mouse.get_pressed()[0] == 1:
-            display.blit(self.clicked_img, (pos[0] - 5, pos[1] - 5))
-
-        if pygame.mouse.get_pressed()[0] == 0:
-            display.fill(grey)
-            display.blit(self.image, (pos[0] - 5, pos[1] - 5))
-            action = False
-            self.clicked = False
-
-        return action
-
-# ----------------------------------------- draw a different image function ------------------------------------------ #
-
-    def draw_different_img(self, choice=True):
-
-        if choice:
-            display.blit(self.clicked_img, (self.rect.x, self.rect.y))
-
-        else:
-            display.blit(self.image, (self.rect.x, self.rect.y))
-
-# ---------------------------------------------- mouse-hover function ------------------------------------------------ #
-
-    def mouse_hover(self):
-
-        pos = pygame.mouse.get_pos()
-
-        if self.rect.collidepoint(pos) and pygame.mouse.get_pressed()[0] == 0:
-            display.blit(self.hover_img, (self.rect.x, self.rect.y))
-            return True
-
-        else:
-            display.blit(self.image, (self.rect.x, self.rect.y))
-            return False
-
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# -------------------------------------------------------------------------------------------------------------------- #
 # ---------------------------------------------- Background rectangles ----------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
 class Rectangle:
-
-    # TODO: add the finish
 
     def __init__(self, starting_img):               # this function initializes a rectangle with all needed variables
         self.starting_img = starting_img
@@ -623,7 +514,10 @@ def transformation_checked(rectangle):
 
 def get_choices(pos, choices):
     for i in range(0, len(choices)):
-        current = choices[i].draw(60 + i * 60, 1, pos)
+        if choices[i].choice == "EXIT":
+            current = choices[i].draw(1920 - 60, 1, pos)
+        else:
+            current = choices[i].draw(i * 60, 1, pos)
 
         if current != "NULL":
             return current
@@ -675,11 +569,10 @@ def main():
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
                Choice(finish_img, finish_clicked_img, finish_hover_img, "FINISH"),
-               Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR")
+               Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR"),
+               Choice(exit_normal_img, exit_clicked_img, exit_hover_img, "EXIT")
                ]
-
-    exit_button = Button(1920 - 70 * 0.4, 0, exit_img, exit_clicked_img, exit_hover_img, 0.4, 0.3)
-    i = 0
+# 1920 - 27
     rectangles = init_screen()
     algorithm_choice = "WALL"
     start_exists = False
@@ -825,10 +718,7 @@ def main():
             case "FINISH":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
 
-        if exit_button.draw():
-            i += 1
-            exit_button.draw_different_img()
-            if i > 0:
+            case "EXIT":
                 running = False
 
         for event in pygame.event.get():
