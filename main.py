@@ -383,14 +383,14 @@ class BFS:
 # ---------------------------------------------------- find path ----------------------------------------------------- #
 
     def find_path_optimal(self, starting_rectangle):
-        if self.finish != (-1, -1):                         # we check that we have a finish
+        if self.finish != (-1, -1):                             # we check that we have a finish
             path = []
             temp_path = []
-            index = len(self.visited) - 1                         # we set the starting index to the last possible index
-            current = self.finish                           # we set the current to the finish position
+            index = len(self.visited) - 1                       # we set the starting index to the last possible index
+            current = self.finish                               # we set the current to the finish position
             while index >= 0:
-                curr_best = (index, current)                # we create the curr best to remember the best so far
-                for neighbor in self.graph[current]:  # we go through neighbors for the current rectangle
+                curr_best = (index, current)                    # we create the curr best to remember the best so far
+                for neighbor in self.graph[current]:            # we go through neighbors for the current rectangle
                     if neighbor in self.visited:
                         if curr_best[0] > self.visited.index(neighbor):  # check if the index of the neighbor is smaller
                             temp_index = self.visited.index(neighbor)
@@ -416,6 +416,28 @@ class BFS:
                 temp_path.clear()
 
         return None
+
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------- A-star ------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+class Astar:
+
+    def __init(self, rectangles, start_rec):
+        self.is_finish = False
+        self.is_start = False
+        self.start = start_rec
+        self.rec = rectangles
+
+# --------------------------------------------------- find finish ---------------------------------------------------- #
+
+    def find_finish(self):
+
+        pass
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -463,6 +485,7 @@ def generate_neighbors():                                   # generates a dictio
                 graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1), (o, i - 1)]})
 
     return graph
+
 
 # --------------------------------------------- follow cursor function ----------------------------------------------- #
 
@@ -513,14 +536,15 @@ def transformation_checked(rectangle):
 
 
 def get_choices(pos, choices):
+    r_this = ["WALL", 1, 0]
     for i in range(0, len(choices)):
         if choices[i].choice == "EXIT":
-            current = choices[i].draw(1920 - 60, 1, pos)
+            r_this[0] = choices[i].draw(1920 - 60, 1, pos)
         else:
-            current = choices[i].draw(i * 60, 1, pos)
+            r_this[0] = choices[i].draw(i * 60, 1, pos)
 
-        if current != "NULL":
-            return current
+        if r_this[0] != "NULL":
+            return r_this
     return "NULL"
 
 
@@ -572,24 +596,26 @@ def main():
                Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR"),
                Choice(exit_normal_img, exit_clicked_img, exit_hover_img, "EXIT")
                ]
-# 1920 - 27
+
+    possible_c = ["DFS", "BFS", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
     rectangles = init_screen()
     algorithm_choice = "WALL"
     start_exists = False
     coordinates = (0, 0)
     graph = generate_neighbors()
-    z = 1
     c = 1
-    t = 1
     current_rectangle = (-1, -1)
     alg_drawn = False
 
     while running:
         pos = pygame.mouse.get_pos()
         clock.tick()
-        current_choice = get_choices(pos, choices)
+        curr_c = get_choices(pos, choices)
+        current_choice = curr_c[0]
+        t = curr_c[1]
+        z = curr_c[2]
 
-        if current_choice != "NULL":
+        if current_choice in possible_c:
             algorithm_choice = current_choice
 
         match algorithm_choice:                                                     # here the algorithms will be used
@@ -602,6 +628,7 @@ def main():
                     threads.append(trd)
                 dfs = DFS()
                 if z == 0:
+                    print("dfs")
                     if alg_drawn:
                         for o in range(0, 35):
                             for i in range(0, 62):
@@ -613,14 +640,15 @@ def main():
                                     rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
 
                     visited_tf.clear()
-                    dfs_thread = threading.Thread(target=dfs.find_finish(rectangles, graph, current_rectangle))
-                    dfs_thread.start()
+                    dfs.find_finish(rectangles, graph, current_rectangle)
                     c = 0
                     z += 1
+                    print(visited_tf)
 
                 if len(visited_tf) != 0 and c == 0:
                     c = 1
                     for o in visited_tf:
+                        print(o)
                         if o != current_rectangle:
                             try:
                                 threads[o[0]][o[1]].start()
@@ -710,9 +738,7 @@ def main():
                         if not rectangles[o][i].is_wall():
                             rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
                 algorithm_choice = "WALL"
-                z = 1
                 c = 1
-                t = 1
                 current_rectangle = (-1, -1)
                 start_exists = False
                 visit.clear()
@@ -726,7 +752,6 @@ def main():
                     starting_coordinates = start_rectangle(pos, rectangles, algorithm_choice, start_exists)
                     if starting_coordinates is not None:
                         current_rectangle = starting_coordinates
-                        z = 0
 
                 if starting_coordinates is None:
                     starting_coordinates = coordinates
