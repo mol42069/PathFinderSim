@@ -78,6 +78,7 @@ class Rectangle:
 
     def __init__(self, starting_img):               # this function initializes a rectangle with all needed variables
         self.starting_img = starting_img
+        self.value = 0
         self.rect = starting_img.get_rect()
         self.t1_i = 0
         self.t2_i = 0
@@ -237,6 +238,10 @@ class Rectangle:
     def is_finish(self):
         return self.finish
 
+# ------------------------------------- returns if the rectangle is the finish --------------------------------------- #
+
+    def set_value(self, value):
+        self.value = value
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -377,7 +382,6 @@ class BFS:
                         return self.visited
                     self.visited.append(neighbour)
                     self.queue.append(neighbour)
-        print(self.visited)
         return self.visited
 
 # ---------------------------------------------------- find path ----------------------------------------------------- #
@@ -427,18 +431,64 @@ class BFS:
 
 class Astar:
 
-    def __init(self, rectangles, start_rec):
+    def __init__(self, rectangles, start_rec, graph):
         self.is_finish = False
         self.is_start = False
         self.start = start_rec
         self.rec = rectangles
+        self.graph = graph
+        self.cur_xy = (self.start[0], self.start[1])
+        self.visited = []
+        self.filtered_v = []
 
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
     def find_finish(self):
+        n_value = 10000
+        temp_next = (-1, -1)
+        for neighbor in self.graph[self.cur_xy]:
+            print(neighbor)
+            print(self.visited)
+            if neighbor not in self.visited:
+                if self.rec[neighbor[0]][neighbor[1]].is_finish():
+                    self.is_finish = True
+                    return
 
-        pass
+                elif self.rec[neighbor[0]][neighbor[1]].is_wall():
+                    self.visited.append(neighbor)
+                    continue
 
+                elif self.rec[neighbor[0]][neighbor[1]].value < n_value:
+                    n_value = self.rec[neighbor[0]][neighbor[1]].value
+                    temp_next = (neighbor[0], neighbor[1])
+
+        if temp_next != (-1, -1):
+            self.visited.append(temp_next)
+            self.filtered_v.append(temp_next)
+            self.cur_xy = temp_next
+            self.find_finish()
+
+        if not self.is_finish:
+            
+        return
+# --------------------------------------------------- find finish ---------------------------------------------------- #
+
+    def give_values(self, finish):
+        for i, yy in enumerate(self.rec):
+            for o, xx in enumerate(yy):
+                temp_value = [finish[0] - o, finish[1] - i]
+                if temp_value[0] < 0:
+                    temp_value[0] = temp_value[0] * -1
+
+                if temp_value[1] < 0:
+                    temp_value[1] = temp_value[1] * -1
+
+                self.rec[i][o].set_value(temp_value[0] + temp_value[1])
+        return self.rec
+        # just testing :
+        # for yy, o in enumerate(self.rec):
+        #     for xx, i in enumerate(o):
+        #         print(self.rec[yy][xx].value)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -588,7 +638,7 @@ def main():
     sys.setrecursionlimit(3000)
     running = True
     clock = pygame.time.Clock()
-    choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
+    choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "ASTAR"),
                Choice(bfs_normal_img, bfs_clicked_img, bfs_hover_img, "BFS"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
@@ -597,11 +647,13 @@ def main():
                Choice(exit_normal_img, exit_clicked_img, exit_hover_img, "EXIT")
                ]
 
-    possible_c = ["DFS", "BFS", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
+    possible_c = ["ASTAR", "BFS", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
     rectangles = init_screen()
+
     algorithm_choice = "WALL"
     start_exists = False
     coordinates = (0, 0)
+    astar_click = 1
     graph = generate_neighbors()
     c = 1
     current_rectangle = (-1, -1)
@@ -628,7 +680,6 @@ def main():
                     threads.append(trd)
                 dfs = DFS()
                 if z == 0:
-                    print("dfs")
                     if alg_drawn:
                         for o in range(0, 35):
                             for i in range(0, 62):
@@ -640,15 +691,14 @@ def main():
                                     rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
 
                     visited_tf.clear()
+                    print(rectangles)
                     dfs.find_finish(rectangles, graph, current_rectangle)
                     c = 0
                     z += 1
-                    print(visited_tf)
 
                 if len(visited_tf) != 0 and c == 0:
                     c = 1
                     for o in visited_tf:
-                        print(o)
                         if o != current_rectangle:
                             try:
                                 threads[o[0]][o[1]].start()
@@ -729,6 +779,31 @@ def main():
 
                         visited_bfs.clear()
 
+            case "ASTAR":
+                if astar_click == 1:
+                    astar_click = 0
+                    astar = Astar(rectangles, current_rectangle, graph)
+                    finish = (-1, -1)
+                    for yy, o in enumerate(rectangles):
+                        for xx, i in enumerate(o):
+                            if i.is_finish():
+                                finish = (xx, yy)
+
+                    rectangles = astar.give_values(finish)
+                    astar.find_finish()
+                    v = astar.filtered_v
+
+                    threads = []
+                    for o in range(0, 35):
+                        trd = []
+                        for i in range(0, 62):
+                            trd.append(threading.Thread(target=transformation_checking, args=(rectangles[o][i],)))
+                        threads.append(trd)
+
+                    for draw in v:
+                        threads[draw[0]][draw[1]].start()
+                        pygame.time.delay(20)
+
             case "WALL":
                 rectangle_clicked(pos, rectangles, algorithm_choice)
 
@@ -739,6 +814,7 @@ def main():
                             rectangles[o][i].mouse_rectangle((0, 0), "CLEAR")
                 algorithm_choice = "WALL"
                 c = 1
+                astar_click = 1
                 current_rectangle = (-1, -1)
                 start_exists = False
                 visit.clear()
