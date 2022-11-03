@@ -443,33 +443,35 @@ class Astar:
 
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
-    def find_finish(self, cur_xy, prev_xy):
+    def find_finish(self, cur_xy):
         while not self.is_finish and self.counter < 3000:
             self.counter += 1
             n_value = 10000                                     # set the next value to 10000 to find the next lowest
             temp_next = (-1, -1)
-            prev_xy = cur_xy
             for neighbor in self.graph[cur_xy]:
                 if neighbor not in self.visited:
-                    if self.rec[neighbor[0]][neighbor[1]].is_finish():
+                    if self.rec[neighbor[0]][neighbor[1]].is_finish():  # check if it is finished
                         self.is_finish = True
-                        return prev_xy
+                        return
 
-                    elif self.rec[neighbor[0]][neighbor[1]].is_wall():
+                    elif self.rec[neighbor[0]][neighbor[1]].is_wall():  # check if wall
+                        self.graph[cur_xy].remove(neighbor)  # removing the next out of the graph for this node
                         self.visited.append(neighbor)
                         continue
 
-                    elif self.rec[neighbor[0]][neighbor[1]].value < n_value:
+                    elif self.rec[neighbor[0]][neighbor[1]].value < n_value:    # we check if value is lower
                         n_value = self.rec[neighbor[0]][neighbor[1]].value
                         temp_next = (neighbor[0], neighbor[1])
 
             if temp_next != (-1, -1):
                 self.visited.append(temp_next)
                 self.filtered_v.append(temp_next)
-                self.graph[cur_xy].remove(temp_next)
-                cur_xy = temp_next
-                cur_xy = self.find_finish(cur_xy, prev_xy)
-        return prev_xy
+                self.graph[cur_xy].remove(temp_next)                # removing the next out of the graph for this node
+                cur_xy = temp_next                                  # so it cant be repeated.
+                temp_next = (-1, -1)                                # reset temp_next, so it can get into here again
+                n_value = 10000                                     # reset value to high for this to not stop.
+                self.find_finish(cur_xy)
+        return
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
     def give_values(self, finish):
@@ -793,7 +795,7 @@ def main():
                                 finish = (xx, yy)
 
                     rectangles = astar.give_values(finish)
-                    astar.find_finish(current_rectangle, current_rectangle)
+                    astar.find_finish(current_rectangle)
                     v = astar.filtered_v
 
                     threads = []
