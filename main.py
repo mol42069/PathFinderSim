@@ -437,53 +437,56 @@ class Astar:
         self.start = start_rec
         self.rec = rectangles
         self.graph = graph
-        self.cur_xy = (self.start[0], self.start[1])
         self.visited = []
         self.filtered_v = []
+        self.counter = 0
 
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
-    def find_finish(self):
-        n_value = 10000
-        temp_next = (-1, -1)
-        for neighbor in self.graph[self.cur_xy]:
-            print(neighbor)
-            print(self.visited)
-            if neighbor not in self.visited:
-                if self.rec[neighbor[0]][neighbor[1]].is_finish():
-                    self.is_finish = True
-                    return
+    def find_finish(self, cur_xy, prev_xy):
+        while not self.is_finish and self.counter < 3000:
+            self.counter += 1
+            n_value = 10000                                     # set the next value to 10000 to find the next lowest
+            temp_next = (-1, -1)
+            prev_xy = cur_xy
+            for neighbor in self.graph[cur_xy]:
+                if neighbor not in self.visited:
+                    if self.rec[neighbor[0]][neighbor[1]].is_finish():
+                        self.is_finish = True
+                        return prev_xy
 
-                elif self.rec[neighbor[0]][neighbor[1]].is_wall():
-                    self.visited.append(neighbor)
-                    continue
+                    elif self.rec[neighbor[0]][neighbor[1]].is_wall():
+                        self.visited.append(neighbor)
+                        continue
 
-                elif self.rec[neighbor[0]][neighbor[1]].value < n_value:
-                    n_value = self.rec[neighbor[0]][neighbor[1]].value
-                    temp_next = (neighbor[0], neighbor[1])
+                    elif self.rec[neighbor[0]][neighbor[1]].value < n_value:
+                        n_value = self.rec[neighbor[0]][neighbor[1]].value
+                        temp_next = (neighbor[0], neighbor[1])
 
-        if temp_next != (-1, -1):
-            self.visited.append(temp_next)
-            self.filtered_v.append(temp_next)
-            self.cur_xy = temp_next
-            self.find_finish()
-
-        if not self.is_finish:
-            
-        return
+            if temp_next != (-1, -1):
+                self.visited.append(temp_next)
+                self.filtered_v.append(temp_next)
+                self.graph[cur_xy].remove(temp_next)
+                cur_xy = temp_next
+                cur_xy = self.find_finish(cur_xy, prev_xy)
+        return prev_xy
 # --------------------------------------------------- find finish ---------------------------------------------------- #
 
     def give_values(self, finish):
         for i, yy in enumerate(self.rec):
             for o, xx in enumerate(yy):
-                temp_value = [finish[0] - o, finish[1] - i]
-                if temp_value[0] < 0:
-                    temp_value[0] = temp_value[0] * -1
+                if xx.wall:                                     # setting the wall to a high number, so it will not be
+                    temp_value = [9000, 0]                  # considered
+                else:
+                    temp_value = [finish[0] - o, finish[1] - i]
+                    if temp_value[0] < 0:
+                        temp_value[0] = temp_value[0] * -1
 
-                if temp_value[1] < 0:
-                    temp_value[1] = temp_value[1] * -1
+                    if temp_value[1] < 0:
+                        temp_value[1] = temp_value[1] * -1
 
                 self.rec[i][o].set_value(temp_value[0] + temp_value[1])
+
         return self.rec
         # just testing :
         # for yy, o in enumerate(self.rec):
@@ -790,7 +793,7 @@ def main():
                                 finish = (xx, yy)
 
                     rectangles = astar.give_values(finish)
-                    astar.find_finish()
+                    astar.find_finish(current_rectangle, current_rectangle)
                     v = astar.filtered_v
 
                     threads = []
