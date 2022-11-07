@@ -49,6 +49,9 @@ dfs_hover_img = pygame.image.load('images/DFS_hover.png').convert_alpha()
 bfs_normal_img = pygame.image.load('images/BFS_normal.png').convert_alpha()
 bfs_clicked_img = pygame.image.load('images/BFS_clicked.png').convert_alpha()
 bfs_hover_img = pygame.image.load('images/BFS_hover.png').convert_alpha()
+astar_hover_img = pygame.image.load('images/Astar_hover.png').convert_alpha()
+astar_clicked_img = pygame.image.load('images/Astar_clicked.png').convert_alpha()
+astar_normal_img = pygame.image.load('images/Astar_normal.png').convert_alpha()
 start_img = pygame.image.load('images/starting.png').convert_alpha()
 clear_img = pygame.image.load('images/clear.png').convert_alpha()
 clear_clicked_img = pygame.image.load('images/clear_clicked.png').convert_alpha()
@@ -431,12 +434,12 @@ class BFS:
 
 class Astar:
 
-    def __init__(self, rectangles, start_rec, graph):
+    def __init__(self, rectangles, start_rec):
         self.is_finish = False
         self.is_start = False
         self.start = start_rec
         self.rec = rectangles
-        self.graph = graph
+        self.graph = generate_neighbors_astar()
         self.visited = []
         self.filtered_v = []
         self.counter = 0
@@ -446,7 +449,7 @@ class Astar:
     def find_finish(self, cur_xy):
         while not self.is_finish and self.counter < 3000:
             self.counter += 1
-            n_value = 10000                                     # set the next value to 10000 to find the next lowest
+            n_value = 10000                                        # set the next value to 10000 to find the next lowest
             temp_next = (-1, -1)
             for neighbor in self.graph[cur_xy]:
                 if neighbor not in self.visited:
@@ -454,8 +457,11 @@ class Astar:
                         self.is_finish = True
                         return
 
+                    if self.rec[neighbor[0]][neighbor[1]].start:  # check if it is finished
+                        continue
+
                     elif self.rec[neighbor[0]][neighbor[1]].is_wall():  # check if wall
-                        self.graph[cur_xy].remove(neighbor)  # removing the next out of the graph for this node
+                        self.graph[cur_xy].remove(neighbor)        # removing the next out of the graph for this node
                         self.visited.append(neighbor)
                         continue
 
@@ -478,7 +484,7 @@ class Astar:
         for i, yy in enumerate(self.rec):
             for o, xx in enumerate(yy):
                 if xx.wall:                                     # setting the wall to a high number, so it will not be
-                    temp_value = [9000, 0]                  # considered
+                    temp_value = [9000, 0]                      # considered
                 else:
                     temp_value = [finish[0] - o, finish[1] - i]
                     if temp_value[0] < 0:
@@ -538,6 +544,48 @@ def generate_neighbors():                                   # generates a dictio
 
             else:
                 graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1), (o, i - 1)]})
+
+    return graph
+
+
+# ----------------------------------------------- generate neighbors ------------------------------------------------- #
+
+
+def generate_neighbors_astar():                             # generates a dictionary which tells us what the neighbors
+    graph = {}                                              # of any given rectangle is and returns this dictionary
+    for o in range(0, 35):
+        for i in range(0, 62):
+
+            if o == 0 or o == 34:
+                if o == 0:
+                    if i == 0:
+                        graph.update({(o, i): [(o, i + 1), (o + 1, i), (o + 1, i + 1)]})
+
+                    elif i == 61:
+                        graph.update({(o, i): [(o + 1, i), (o, i - 1), (o + 1, i - 1)]})
+
+                    else:
+                        graph.update({(o, i): [(o + 1, i), (o, i + 1), (o, i - 1), (o + 1, i + 1), (o + 1, i - 1)]})
+                elif o == 34:
+                    if i == 0:
+                        graph.update({(o, i): [(o - 1, i), (o, i + 1), (o - 1, i + 1)]})
+
+                    elif i == 61:
+                        graph.update({(o, i): [(o - 1, i), (o, i - 1), (o - 1, i - 1)]})
+
+                    else:
+                        graph.update({(o, i): [(o - 1, i), (o, i + 1), (o, i - 1), (o - 1, i - 1), (o - 1, i + 1)]})
+
+            elif i == 0 or i == 61:
+                if i == 0:
+                    graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1), (o + 1, i + 1), (o + 1, i - 1)]})
+
+                if i == 61:
+                    graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i - 1), (o + 1, i - 1), (o - 1, i + 1)]})
+
+            else:
+                graph.update({(o, i): [(o + 1, i), (o - 1, i), (o, i + 1), (o, i - 1), (o + 1, i + 1), (o + 1, i - 1),
+                                       (o - 1, i + 1), (o - 1, i - 1)]})
 
     return graph
 
@@ -643,8 +691,9 @@ def main():
     sys.setrecursionlimit(3000)
     running = True
     clock = pygame.time.Clock()
-    choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "ASTAR"),
+    choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
                Choice(bfs_normal_img, bfs_clicked_img, bfs_hover_img, "BFS"),
+               Choice(astar_normal_img, astar_clicked_img, astar_hover_img, "ASTAR"),
                Choice(wall_img, wall_clicked_img, wall_hover_img, "WALL"),
                Choice(start_b_img, start_b_clicked_img, start_b_hover_img, "START"),
                Choice(finish_img, finish_clicked_img, finish_hover_img, "FINISH"),
@@ -652,7 +701,7 @@ def main():
                Choice(exit_normal_img, exit_clicked_img, exit_hover_img, "EXIT")
                ]
 
-    possible_c = ["ASTAR", "BFS", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
+    possible_c = ["DFS", "BFS", "ASTAR", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
     rectangles = init_screen()
 
     algorithm_choice = "WALL"
@@ -787,7 +836,7 @@ def main():
             case "ASTAR":
                 if astar_click == 1:
                     astar_click = 0
-                    astar = Astar(rectangles, current_rectangle, graph)
+                    astar = Astar(rectangles, current_rectangle)
                     finish = (-1, -1)
                     for yy, o in enumerate(rectangles):
                         for xx, i in enumerate(o):
