@@ -688,9 +688,16 @@ def start_rectangle(pos, rectangles, choice, current_start):
 
 
 def main():
+    # set the maximum recursion depth to 3000
     sys.setrecursionlimit(3000)
+    
+    # flag for the main loop
     running = True
+    
+    # create a clock to control the frame rate
     clock = pygame.time.Clock()
+    
+    # create a list of button choices
     choices = [Choice(dfs_img, dfs_clicked_img, dfs_hover_img, "DFS"),
                Choice(bfs_normal_img, bfs_clicked_img, bfs_hover_img, "BFS"),
                Choice(astar_normal_img, astar_clicked_img, astar_hover_img, "ASTAR"),
@@ -700,32 +707,61 @@ def main():
                Choice(clear_img, clear_clicked_img, clear_hover_img, "CLEAR"),
                Choice(exit_normal_img, exit_clicked_img, exit_hover_img, "EXIT")
                ]
-
+    
+    # possible choices for the algorithm
     possible_c = ["DFS", "BFS", "ASTAR", "WALL", "START", "FINISH", "CLEAR", "EXIT"]
+    
+    # initialize the screen and create rectangles for the grid
     rectangles = init_screen()
-
+    
+    # set the default algorithm choice to "WALL"
     algorithm_choice = "WALL"
+    
+    # flag for whether a start point has been set
     start_exists = False
+    
+    # coordinates for the current rectangle
     coordinates = (0, 0)
+    
+    # variable for tracking clicks on the A* algorithm button
     astar_click = 1
+    
+    # generate the graph of neighboring rectangles
     graph = generate_neighbors()
+    
+    # variable for tracking the state of the algorithm
     c = 1
+    
+    # coordinates for the current rectangle
     current_rectangle = (-1, -1)
+    
+    # flag for whether the algorithm has been drawn on the screen
     alg_drawn = False
-
+    
+    # main loop
     while running:
+        # get the current mouse position
         pos = pygame.mouse.get_pos()
+    
+        # tick the clock to control the frame rate
         clock.tick()
+    
+        # check if the mouse is hovering over any buttons
         curr_c = get_choices(pos, choices)
+    
+        # get the current button choice and the corresponding button's index
         current_choice = curr_c[0]
         t = curr_c[1]
         z = curr_c[2]
-
+    
+        # update the algorithm choice if the current choice is a valid choice
         if current_choice in possible_c:
             algorithm_choice = current_choice
-
-        match algorithm_choice:                                                     # here the algorithms will be used
+    
+        # use a match statement to decide which algorithm to run based on the algorithm_choice variable
+        match algorithm_choice:
             case "DFS":
+                # create a list of threads to update the rectangles in parallel
                 threads = []
                 for o in range(0, 35):
                     trd = []
